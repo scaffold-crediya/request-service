@@ -1,8 +1,15 @@
 server:
-  port: 8080
+  port: 8081
 spring:
   application:
     name: "request-service"
+  r2dbc:
+    host: localhost
+    port: 5433
+    database: crediya_request
+    schema: public
+    username: jhompo
+    password: pass123
   devtools:
     add-properties: false
   h2:
