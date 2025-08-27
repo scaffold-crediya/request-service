@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_requestDB
+    restart: always
+    environment:
+      POSTGRES_DB: crediya_request
+      POSTGRES_USER: jhompo
+      POSTGRES_PASSWORD: pass123
+    ports:
+      # Puerto de la máquina host : Puerto del contenedor
+      - "5433:5432"
+    volumes:
+      - ./data_vol/postgres-auth-data:/var/lib/postgresql/data
+
+volumes:
+  mysql_data: {}
