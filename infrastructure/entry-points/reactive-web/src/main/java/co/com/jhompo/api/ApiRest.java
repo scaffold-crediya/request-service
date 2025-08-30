@@ -1,9 +1,10 @@
 package co.com.jhompo.api;
+import co.com.jhompo.api.dtos.LoanApplicationDTO;
+import co.com.jhompo.api.mapper.LoanApplicationMapper;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -15,7 +16,12 @@ public class ApiRest {
 
     @GetMapping(path = "/usecase/path")
     public Mono<String> commandName() {
-//      return useCase.doAction();
-        return Mono.just("");
+        return Mono.just("hola jhompo");
+    }
+
+    @PostMapping("/save")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<String> create(@RequestBody LoanApplicationDTO dto) {
+         return Mono.just("Hola jhompo: " + dto.getEmail());
     }
 }
