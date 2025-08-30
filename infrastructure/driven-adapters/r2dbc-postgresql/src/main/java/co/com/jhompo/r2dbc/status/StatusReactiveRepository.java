@@ -10,5 +10,5 @@ public interface StatusReactiveRepository
         extends ReactiveCrudRepository<StatusEntity, Integer>, ReactiveQueryByExampleExecutor<StatusEntity> {
 
     // Spring Data generará la consulta
-    Mono<Boolean> existsByName(String name);
+    Mono<StatusEntity> findByName(String name);
 }
