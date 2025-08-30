@@ -1,10 +1,9 @@
-package co.com.jhompo.r2dbc;
+package co.com.jhompo.r2dbc.application;
 
 import co.com.jhompo.model.loanapplication.gateways.UserExistenceGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 @Component

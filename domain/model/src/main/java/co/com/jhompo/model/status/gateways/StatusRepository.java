@@ -9,5 +9,5 @@ public interface StatusRepository {
     Mono<Status> findById(Integer id);
     Flux<Status> findAll();
     Mono<Void> deleteById(Integer id);
-    Mono<Boolean> existsByName(String name);
+    Mono<Status> findByName(String name);
 }
