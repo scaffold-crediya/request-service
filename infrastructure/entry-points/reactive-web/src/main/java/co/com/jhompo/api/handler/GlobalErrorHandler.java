@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-//import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ServerWebExchange;
@@ -47,11 +46,26 @@ public class GlobalErrorHandler {
         );
     } */
 
-    // 3) Errores de base de datos
+
+    // 3) Handler genérico para DataIntegrityViolationException
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleDataIntegrity(
             DataIntegrityViolationException ex, ServerWebExchange exchange) {
-        log.error("Database error: {}", ex.getMessage());
+
+        String errorMessage = ex.getMessage();
+        log.error("Database error: {}", errorMessage);
+
+        // Verificar si es el error específico del índice
+        if (errorMessage != null && errorMessage.contains("application_email_idx")) {
+            return buildErrorResponse(
+                    HttpStatus.CONFLICT,
+                    "Duplicate Application",
+                    "Ya existe una solicitud con este email para el tipo de préstamo seleccionado.",
+                    exchange.getRequest().getURI().getPath()
+            );
+        }
+
+        // Manejo genérico
         return buildErrorResponse(
                 HttpStatus.CONFLICT,
                 "Data integrity violation",
