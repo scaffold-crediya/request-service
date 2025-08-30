@@ -14,10 +14,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class LoanApplicationDTO {
 
-    private UUID id;
     private BigDecimal amount;
     private Integer term;
     private String email;
-    private UUID statusId;
-    private UUID applicationTypeId;
+    private Integer statusId;
+    private Integer applicationTypeId;
 }

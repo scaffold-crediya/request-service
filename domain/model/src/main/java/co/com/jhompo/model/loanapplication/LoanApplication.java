@@ -14,6 +14,9 @@ public class LoanApplication {
     private BigDecimal amount;
     private Integer term;
     private String email;
-    private UUID statusId;
-    private UUID applicationTypeId;
+    private Integer statusId;
+    private Integer applicationTypeId;
+
+    public LoanApplication(BigDecimal amount, Integer term, String email, Integer statusId, Integer applicationTypeId) {
+    }
 }
