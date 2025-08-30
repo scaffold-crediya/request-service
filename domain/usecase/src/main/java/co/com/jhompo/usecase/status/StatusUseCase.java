@@ -12,14 +12,14 @@ public class StatusUseCase {
     private final StatusRepository statusRepository;
 
     public Mono<Status> createStatus(Status status) {
-        // Regla de negocio: No permitir la creación de un estado con un nombre duplicado
-        return statusRepository.existsByName(status.getName())
-                .flatMap(exists -> {
-                    if (Boolean.TRUE.equals(exists)) {
-                        return Mono.error(new IllegalArgumentException("Status with name '" + status.getName() + "' already exists."));
-                    }
-                    return statusRepository.save(status);
-                });
+        // Regla de negocio: No permitir la creación de un estado con un nombre duplicado.
+        return statusRepository.findByName(status.getName())
+                .flatMap(foundStatus ->
+                    Mono.<Status>error(new IllegalArgumentException("Status with name '" + status.getName() + "' already exists."))
+                )
+                .switchIfEmpty(
+                    Mono.defer(() -> statusRepository.save(status))
+                );
     }
 
     public Mono<Status> getStatusById(Integer id) {

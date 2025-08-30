@@ -59,7 +59,7 @@ public class GlobalErrorHandler {
         if (errorMessage != null && errorMessage.contains("application_email_idx")) {
             return buildErrorResponse(
                     HttpStatus.CONFLICT,
-                    "Duplicate Application",
+                    "Duplicate Key",
                     "Ya existe una solicitud con este email para el tipo de préstamo seleccionado.",
                     exchange.getRequest().getURI().getPath()
             );
