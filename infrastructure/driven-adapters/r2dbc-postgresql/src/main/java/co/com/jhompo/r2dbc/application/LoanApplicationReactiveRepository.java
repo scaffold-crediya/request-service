@@ -1,4 +1,4 @@
-package co.com.jhompo.r2dbc;
+package co.com.jhompo.r2dbc.application;
 
 import co.com.jhompo.r2dbc.entity.LoanApplicationEntity;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;

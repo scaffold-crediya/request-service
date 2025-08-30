@@ -1,4 +1,4 @@
-package co.com.jhompo.r2dbc;
+package co.com.jhompo.r2dbc.application;
 
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
