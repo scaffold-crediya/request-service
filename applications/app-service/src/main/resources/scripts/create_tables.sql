@@ -19,5 +19,5 @@ CREATE TABLE IF NOT EXISTS application (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
 );
-CREATE UNIQUE INDEX application_email_idx
-  ON application (email, id_loan_type);
+CREATE UNIQUE INDEX application_email_idx ON application (email, id_loan_type);
+
