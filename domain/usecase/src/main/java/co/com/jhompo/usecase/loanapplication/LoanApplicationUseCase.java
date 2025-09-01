@@ -31,7 +31,7 @@ public class LoanApplicationUseCase {
                     return applicationTypeRepository.findById(loanApplication.getApplicationTypeId());
 
                 })
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("El tipo de Solicitud no existe.")))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El Tipo de Solicitud no existe.")))
                 .flatMap(applicationType -> {
                     // Lógica para encontrar o crear el estado "PENDIENTE_REVISION"
                     return statusRepository.findByName("PENDIENTE_REVISION")
@@ -48,6 +48,8 @@ public class LoanApplicationUseCase {
                             });
                 });
     }
+
+
 
 
     public Mono<LoanApplication> update(LoanApplication loanApplication) {
