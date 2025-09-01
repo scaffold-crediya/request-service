@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -36,9 +37,14 @@ public class LoanApplicationRepositoryAdapter
         );
     }
 
+    @Override
+    public Flux<LoanApplication> findByStatus_Name(String statusName) {
+        return repository.findByStatusName(statusName).map(this::toEntity);
+    }
+
 
     @Override
     public Mono<Void> deleteById(UUID id) {
-        return null;
+        return repository.deleteById(id);
     }
 }
