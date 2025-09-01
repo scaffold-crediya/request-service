@@ -1,6 +1,7 @@
 package co.com.jhompo.api;
 
 import co.com.jhompo.api.dtos.LoanApplicationDTO;
+import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import co.com.jhompo.api.mapper.LoanApplicationMapper;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.usecase.loanapplication.LoanApplicationUseCase;
@@ -10,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -86,12 +86,12 @@ public class LoanApplicationController {
     }
 
 
-    @Operation(summary = "Listar todas las solicitudes por estado")
-    @GetMapping("/estado/{name}")
-    public Flux<LoanApplication> getAllbyStatus(@PathVariable("name") String name) {
-        log.info("Listando todas las solicitudes por estado");
-        return loanApplicationUseCase.getAllApplicationByStatus(name.toUpperCase())
-                .doOnComplete(()  -> log.info("Solicitud encontrada"))
-                .doOnError(error -> log.error("Error al consultar solicitud ID={}", error));
+    @Operation(summary = "Listar solicitudes por estado paginado y filtrado")
+    @GetMapping("/estado/{statusName}")
+    public Flux<LoanApplicationSummaryDTO> getSummariesByStatus( @PathVariable("statusName") String statusName,
+                                                                 @RequestParam(name = "page", defaultValue = "0") int page,
+                                                                 @RequestParam(name = "size", defaultValue = "10") int size) {
+
+        return loanApplicationUseCase.findByStatusName(statusName, page, size);
     }
 }
