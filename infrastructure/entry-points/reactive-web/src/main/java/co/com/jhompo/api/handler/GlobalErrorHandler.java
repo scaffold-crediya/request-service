@@ -8,9 +8,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.ConnectException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -45,6 +47,27 @@ public class GlobalErrorHandler {
                 exchange.getRequest().getURI().getPath()
         );
     } */
+
+    @ExceptionHandler(WebClientRequestException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleWebClientRequestException(WebClientRequestException ex, ServerWebExchange exchange) {
+        // Check if the underlying cause is a connection failure
+        if (ex.getCause() instanceof ConnectException) {
+            return buildErrorResponse(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase(),
+                    "El servicio no está disponible. Intente de nuevo más tarde.",
+                    exchange.getRequest().getPath().toString()
+            );
+        }
+
+        // Handle other types of WebClientRequestException
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                "Ocurrió un error al comunicarse con un servicio externo.",
+                exchange.getRequest().getPath().toString()
+        );
+    }
 
 
     // 3) Handler genérico para DataIntegrityViolationException
