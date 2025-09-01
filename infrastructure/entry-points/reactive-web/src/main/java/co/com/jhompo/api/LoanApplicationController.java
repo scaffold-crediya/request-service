@@ -37,7 +37,7 @@ public class LoanApplicationController {
 
     @Operation(summary = "Actualizar solicitud existente")
     @PutMapping("/{id}")
-    public Mono<LoanApplication> update(@PathVariable UUID id, @RequestBody LoanApplication dto) {
+    public Mono<LoanApplication> update(@PathVariable(value = "id") UUID id, @RequestBody LoanApplication dto) {
         log.info(" Recibiendo solicitud de actualización ID={} con datos: {}", id, dto);
         dto.setId(id);
         return loanApplicationUseCase.update(dto)
@@ -56,7 +56,7 @@ public class LoanApplicationController {
 
     @Operation(summary = "Buscar solicitud por ID")
     @GetMapping("/{id}")
-    public Mono<LoanApplication> getById(@PathVariable UUID id) {
+    public Mono<LoanApplication> getById(@PathVariable(value = "id") UUID id) {
         log.info("Consultando solicitud con ID={}", id);
         return loanApplicationUseCase.getById(id)
                 .doOnSuccess(app -> log.info("Solicitud encontrada: {}", app))
@@ -66,10 +66,20 @@ public class LoanApplicationController {
     @Operation(summary = "Eliminar solicitud")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> delete(@PathVariable UUID id) {
+    public Mono<Void> delete(@PathVariable(value = "id") UUID id) {
         log.info("Eliminando solicitud con ID={}", id);
         return loanApplicationUseCase.delete(id)
                 .doOnSuccess(v -> log.info("Solicitud eliminada ID={}", id))
                 .doOnError(error -> log.error("Error al eliminar solicitud ID={}", id, error));
+    }
+
+
+    @Operation(summary = "Listar todas las solicitudes por estado")
+    @GetMapping("/estado/{name}")
+    public Flux<LoanApplication> getAllbyStatus(@PathVariable("name") String name) {
+        log.info("Listando todas las solicitudes por estado");
+        return loanApplicationUseCase.getAllApplicationByStatus(name.toUpperCase())
+                .doOnComplete(()  -> log.info("Solicitud encontrada"))
+                .doOnError(error -> log.error("Error al consultar solicitud ID={}", error));
     }
 }

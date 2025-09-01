@@ -334,4 +334,5 @@ gradle-app.setting
 # -----
 *.hprof
 build-cache
+data_vol/
 /data_vol/
