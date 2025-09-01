@@ -17,6 +17,5 @@ public class LoanApplication {
     private Integer statusId;
     private Integer applicationTypeId;
 
-    public LoanApplication(BigDecimal amount, Integer term, String email, Integer statusId, Integer applicationTypeId) {
-    }
+
 }
