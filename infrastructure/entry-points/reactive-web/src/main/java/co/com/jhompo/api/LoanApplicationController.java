@@ -9,10 +9,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
+import static org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext;
 import java.util.UUID;
 
 @Slf4j
@@ -26,13 +28,23 @@ public class LoanApplicationController {
     private final LoanApplicationMapper mapper;
 
     @Operation(summary = "Crear nueva solicitud de crédito")
-    @PostMapping
+    @PostMapping("/registrar")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<LoanApplication> create(@RequestBody LoanApplicationDTO dto) {
         log.info("Recibiendo solicitud de creación: {}", dto);
-        return loanApplicationUseCase.create(mapper.toEntityForCreate(dto))
-                .doOnSuccess(app -> log.info("Solicitud creada: {}", app))
-                .doOnError(error -> log.error("Error al crear solicitud", error));
+
+        return getContext()
+                .map(securityContext -> securityContext.getAuthentication())
+                .map(Authentication::getPrincipal)
+                .cast(String.class)
+                .flatMap(authenticatedEmail -> {
+                    if (!authenticatedEmail.equals(dto.getEmail())) {
+                        return Mono.error(new IllegalArgumentException("No puede crear una solicitud a nombre de otro usuario."));
+                    }
+                    return loanApplicationUseCase.create(mapper.toEntityForCreate(dto));
+                })
+                .doOnSuccess(app -> log.info("*******Solicitud creada: {}", app))
+                .doOnError(error -> log.error("********Error al crear solicitud", error));
     }
 
     @Operation(summary = "Actualizar solicitud existente")
