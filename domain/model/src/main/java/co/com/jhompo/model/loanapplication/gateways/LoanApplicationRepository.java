@@ -14,5 +14,7 @@ public interface LoanApplicationRepository {
 
     Flux<LoanApplication> findAll();
 
+    Flux<LoanApplication> findByStatus_Name(String statusName);
+
     Mono<Void> deleteById(UUID id);
 }

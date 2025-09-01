@@ -69,5 +69,8 @@ public class LoanApplicationUseCase {
         return loanApplicationRepository.deleteById(id);
     }
 
+    public Flux<LoanApplication> getAllApplicationByStatus(String status) {
+       return loanApplicationRepository.findByStatus_Name(status);
+    }
 
 }

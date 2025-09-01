@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class EmailVerifyAdapter implements UserExistenceGateway {
@@ -21,20 +23,17 @@ public class EmailVerifyAdapter implements UserExistenceGateway {
         return authWebClient.get()
                 .uri(uri, email)
                 .retrieve()
-                .toEntity(String.class) // Cambiar temporalmente para ver
-                .doOnNext(response -> {
-                    System.out.println("Status Code: {}" + response.getStatusCode());
-                    System.out.println("Headers: {}" + response.getHeaders());
-                    System.out.println("Body: '{}'" + response.getBody());
+                .bodyToMono(Map.class) // Usar Map genérico
+                .doOnNext(userResponse -> {
+                    System.out.println("Usuario encontrado: '{}'" + userResponse);
                 })
-                .map(response -> {
-                    String body = response.getBody();
-                    if (body == null) {
-                        System.out.println("Body es null");
+                .map(userResponse -> {
+                    if (userResponse == null || userResponse.isEmpty()) {
+                        System.out.println("UserResponse es null o vacío");
                         return false;
                     }
-                    boolean result = Boolean.parseBoolean(body.trim());
-                    System.out.println("Resultado: {}" +  result);
+                    boolean result = true; // Si hay Map con datos, el usuario existe
+                    System.out.println("Usuario existe - Resultado: {}" + result);
                     return result;
                 })
                 .doOnError(error -> {
