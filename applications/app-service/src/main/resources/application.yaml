@@ -38,3 +38,8 @@ security:
     secret-key: "VGhpcy1Jcy1BLVNlY3JldC1LZXktRm9yLUpyZWRpdG9zLVNlcnZpY2U="
     # Expiración en milisegundos (ej. 1 hora)
     expiration-time: 3600000
+logging:
+  level:
+    io.r2dbc.postgresql: DEBUG
+    org.springframework.r2dbc.core: DEBUG
+    org.springframework.data.r2dbc: DEBUG

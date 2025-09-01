@@ -6,6 +6,7 @@ import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
 import co.com.jhompo.model.loanapplication.gateways.UserExistenceGateway;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
+import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -71,8 +72,8 @@ public class LoanApplicationUseCase {
         return loanApplicationRepository.deleteById(id);
     }
 
-    public Flux<LoanApplication> getAllApplicationByStatus(String status) {
-       return loanApplicationRepository.findByStatus_Name(status);
+    public Flux<LoanApplicationSummaryDTO> findByStatusName(String statusName, int page, int size) {
+        return loanApplicationRepository.findSummariesByStatus(statusName.toUpperCase(), page, size);
     }
 
 }

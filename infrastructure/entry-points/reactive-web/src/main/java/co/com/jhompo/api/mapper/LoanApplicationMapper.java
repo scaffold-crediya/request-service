@@ -12,9 +12,6 @@ public interface LoanApplicationMapper {
     @Mapping(target = "id", ignore = true)
     LoanApplication toEntityForCreate(LoanApplicationDTO dto);
 
-    // Actualizar: sí mapea id
-    LoanApplication toEntityForUpdate(LoanApplicationDTO dto);
-
     // A DTO
     LoanApplicationDTO toDto(LoanApplication entity);
 }
