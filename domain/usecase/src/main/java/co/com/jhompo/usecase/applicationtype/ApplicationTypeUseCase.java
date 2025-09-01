@@ -2,7 +2,6 @@ package co.com.jhompo.usecase.applicationtype;
 
 import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
-import co.com.jhompo.model.status.Status;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
