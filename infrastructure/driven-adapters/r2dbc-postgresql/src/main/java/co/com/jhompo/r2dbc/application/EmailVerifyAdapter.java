@@ -13,12 +13,14 @@ import java.util.Map;
 public class EmailVerifyAdapter implements UserExistenceGateway {
 
     private final WebClient authWebClient; // Inyectaremos un WebClient configurado
+    private final String uri = "/api/v1/usuarios/email/{email}";
+
+
 
     @Override
     public Mono<Boolean> userExistsByEmail(String email) {
 
         System.out.println("*****Email a validar: {}" + email);
-        String uri = "/api/v1/usuarios/email/{email}";
 
         return authWebClient.get()
                 .uri(uri, email)

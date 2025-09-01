@@ -32,3 +32,9 @@ cors:
 microservices:
   autenticacion:
     url: "http://localhost:8080"
+security:
+  jwt:
+    # Genera una clave secreta segura, por ejemplo, con un generador online
+    secret-key: "VGhpcy1Jcy1BLVNlY3JldC1LZXktRm9yLUpyZWRpdG9zLVNlcnZpY2U="
+    # Expiración en milisegundos (ej. 1 hora)
+    expiration-time: 3600000
