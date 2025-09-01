@@ -1,6 +1,7 @@
 package co.com.jhompo.model.loanapplication.gateways;
 
 import co.com.jhompo.model.loanapplication.LoanApplication;
+import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -14,7 +15,7 @@ public interface LoanApplicationRepository {
 
     Flux<LoanApplication> findAll();
 
-    Flux<LoanApplication> findByStatus_Name(String statusName);
+    Flux<LoanApplicationSummaryDTO> findSummariesByStatus(String statusName, int page, int size);
 
     Mono<Void> deleteById(UUID id);
 }
