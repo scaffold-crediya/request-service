@@ -1,53 +1,50 @@
 package co.com.jhompo.r2dbc.application;
 
-import co.com.jhompo.model.loanapplication.gateways.UserExistenceGateway;
+import co.com.jhompo.common.Messages.*;
+import co.com.jhompo.model.user.User;
+import co.com.jhompo.model.user.gateways.UserExistenceGateway;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class EmailVerifyAdapter implements UserExistenceGateway {
 
     private final WebClient authWebClient; // Inyectaremos un WebClient configurado
-    private final String uri = "/api/v1/usuarios/email/{email}";
+    private final String uri = "/api/v1/usuarios";
 
+    // El metodo original se queda como estaba (con el código limpio)
+    @Override
+    public Mono<Boolean> userExistsByEmail(String email) {
+        String parameter = "/email/{email}";
+        return authWebClient.get()
+                .uri(uri+parameter,email)
+                .retrieve()
+                .toBodilessEntity()
+                .map(response -> response.getStatusCode().is2xxSuccessful())
+                .onErrorReturn(false);
+    }
 
 
     @Override
-    public Mono<Boolean> userExistsByEmail(String email) {
+    public Flux<User> findUserDetailsByEmails(List<String> emails) {
+        String parameter = "/details-by-email";
+        return Flux.deferContextual(ctx -> {
+            String token = ctx.get("jwt"); // Recuperamos el token del Reactor Context
 
-        System.out.println("*****Email a validar: {}" + email);
-
-        return authWebClient.get()
-                .uri(uri, email)
-                .retrieve()
-                .bodyToMono(Map.class) // Usar Map genérico
-                .doOnNext(userResponse -> {
-                    System.out.println("Usuario encontrado: '{}'" + userResponse);
-                })
-                .map(userResponse -> {
-                    if (userResponse == null || userResponse.isEmpty()) {
-                        System.out.println("UserResponse es null o vacío");
-                        return false;
-                    }
-                    boolean result = true; // Si hay Map con datos, el usuario existe
-                    System.out.println("Usuario existe - Resultado: {}" + result);
-                    return result;
-                })
-                .doOnError(error -> {
-                    System.out.println("Error en WebClient: " + error);
-                })
-                .onErrorResume(e -> {
-                    System.out.println("Capturando error y retornando false: {}"+ e.getMessage());
-                    return Mono.just(false);
-                })
-                .doFinally(signal -> {
-                    System.out.println("=== FIN comprobarEmail - Signal: {} ===" + signal);
-                });
+            return authWebClient.post()
+                    .uri(uri + parameter)
+                    .headers(headers -> headers.setBearerAuth(token))
+                    .bodyValue(emails)
+                    .retrieve()
+                    .bodyToFlux(User.class);
+        });
     }
 
 }

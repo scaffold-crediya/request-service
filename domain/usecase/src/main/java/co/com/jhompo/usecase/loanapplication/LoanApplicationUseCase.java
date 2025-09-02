@@ -3,7 +3,8 @@ package co.com.jhompo.usecase.loanapplication;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
-import co.com.jhompo.model.loanapplication.gateways.UserExistenceGateway;
+import co.com.jhompo.model.user.User;
+import co.com.jhompo.model.user.gateways.UserExistenceGateway;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 import static co.com.jhompo.common.Messages.*;
@@ -74,7 +76,27 @@ public class LoanApplicationUseCase {
     }
 
     public Flux<LoanApplicationSummaryDTO> findByStatusName(String statusName, int page, int size) {
-        return loanApplicationRepository.findSummariesByStatus(statusName.toUpperCase(), page, size);
+        return loanApplicationRepository.findSummariesByStatus(statusName.toUpperCase(), page, size)
+                .collectList()
+                .flatMapMany(summaries -> {
+                    List<String> emails = summaries.stream()
+                            .map(LoanApplicationSummaryDTO::getEmail)
+                            .distinct()
+                            .toList();
+
+                    return verifyEmailExists.findUserDetailsByEmails(emails)
+                            .collectMap(User::getEmail, user -> user)
+                            .flatMapMany(userMap -> Flux.fromIterable(summaries)
+                                    .map(summary -> {
+                                        User user = userMap.get(summary.getEmail());
+                                        if (user != null) {
+                                            summary.setName(user.getFirstName()); // o getName() según tu clase User
+                                            summary.setBaseSalary(user.getBaseSalary()); // o el campo correcto
+                                        }
+                                        return summary;
+                                    })
+                            );
+                });
     }
 
 }

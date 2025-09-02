@@ -9,6 +9,8 @@ public final class Messages {
     // MENSAJES DE SEGURIDAD Y JWT
     // ============================================
     public static final class SECURITY {
+
+
         // Errores JWT
         public static final String INVALID_TOKEN = "Token JWT inválido";
         public static final String TOKEN_EXPIRED = "Token JWT expirado";
