@@ -6,11 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-import org.springframework.web.cors.reactive.CorsWebFilter;
 
-import java.util.List;
+import static co.com.jhompo.common.Messages.ROLE.*;
 
 @Configuration
 public class SecurityConfig {
@@ -36,14 +33,14 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/webjars/**"
                         ).permitAll()
-                        .pathMatchers("/api/v1/solicitud").hasAnyAuthority("ADMIN", "ASESOR", "CLIENTE") // POST
-                        .pathMatchers("/api/v1/solicitud/registrar").hasAnyAuthority( "CLIENTE") // POST
-                        .pathMatchers("/api/v1/solicitud/{id}").hasAnyAuthority("ADMIN", "ASESOR", "CLIENTE") // GET, PUT, DELETE
-                        .pathMatchers("/api/v1/solicitud/estado/{name}").hasAnyAuthority("ADMIN", "ASESOR") // GET
-                        .pathMatchers("/api/v1/loantype").hasAuthority("ADMIN") // POST, GET
-                        .pathMatchers("/api/v1/loantype/{id}").hasAuthority("ADMIN") // PUT, GET, DELETE
-                        .pathMatchers("/api/v1/statuses").hasAuthority("ADMIN") // POST, GET
-                        .pathMatchers("/api/v1/statuses/{id}").hasAuthority("ADMIN") // PUT, GET, DELETE
+                        .pathMatchers("/api/v1/solicitud").hasAnyAuthority(ADMIN, ASESOR, CLIENTE) // POST
+                        .pathMatchers("/api/v1/solicitud/registrar").hasAnyAuthority( CLIENTE) // POST
+                        .pathMatchers("/api/v1/solicitud/{id}").hasAnyAuthority(ADMIN, ASESOR, CLIENTE) // GET, PUT, DELETE
+                        .pathMatchers("/api/v1/solicitud/estado/{name}").hasAnyAuthority(ADMIN, ASESOR) // GET
+                        .pathMatchers("/api/v1/loantype").hasAuthority(ADMIN) // POST, GET
+                        .pathMatchers("/api/v1/loantype/{id}").hasAuthority(ADMIN) // PUT, GET, DELETE
+                        .pathMatchers("/api/v1/statuses").hasAuthority(ADMIN) // POST, GET
+                        .pathMatchers("/api/v1/statuses/{id}").hasAuthority(ADMIN) // PUT, GET, DELETE
                         // Todas las demás peticiones deben estar autenticadas
                         .anyExchange().authenticated()
                 )

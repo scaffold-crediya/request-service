@@ -5,7 +5,7 @@ import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
-import co.com.jhompo.model.loanapplication.gateways.UserExistenceGateway;
+import co.com.jhompo.model.user.gateways.UserExistenceGateway;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.usecase.loanapplication.LoanApplicationUseCase;
@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
