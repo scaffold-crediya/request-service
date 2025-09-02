@@ -48,7 +48,8 @@ public class LoanApplicationRepositoryAdapter
 
     @Override
     public Flux<LoanApplicationSummaryDTO> findSummariesByStatus(String statusName, int page, int size) {
-        return repository.findSummariesByStatus(statusName, PageRequest.of(page, size))
+        long offset = (long) page * size;
+        return repository.findSummariesByStatus(statusName.toUpperCase(), size, offset)
                 .map(this::toDto);
     }
 
