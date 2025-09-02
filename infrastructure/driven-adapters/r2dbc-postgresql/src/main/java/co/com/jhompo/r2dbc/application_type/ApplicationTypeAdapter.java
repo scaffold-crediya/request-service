@@ -1,11 +1,10 @@
 package co.com.jhompo.r2dbc.application_type;
 
+import co.com.jhompo.common.Messages.*;
 import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
-import co.com.jhompo.model.status.Status;
 import co.com.jhompo.r2dbc.entity.ApplicationTypeEntity;
 import co.com.jhompo.r2dbc.helper.ReactiveAdapterOperations;
-import lombok.RequiredArgsConstructor;
 import org.reactivecommons.utils.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 
 @Repository
 
@@ -33,8 +33,8 @@ public class ApplicationTypeAdapter
         log.info("Iniciando guardado en BD para el tipo de aplicación: {}", applicationType.getName());
         return transactionalOperator.transactional(
                 super.save(applicationType)
-                        .doOnSuccess(saved -> log.info("Guardado exitoso en BD: {}", saved.getName()))
-                        .doOnError(e -> log.error("Error al guardar el tipo de aplicación: {}", applicationType.getName(), e))
+                        .doOnSuccess(saved -> log.info(SYSTEM.OPERATION_SUCCESS, saved.getName()))
+                        .doOnError(e -> log.error(SYSTEM.OPERATION_ERROR, applicationType.getName(), e))
         );
     }
 
@@ -53,8 +53,8 @@ public class ApplicationTypeAdapter
         log.info("Iniciando eliminación en BD para el tipo de aplicación ID: {}", id);
         return transactionalOperator.transactional(
                 repository.deleteById(id)
-                        .doOnSuccess(v -> log.info("Eliminación exitosa en BD: {}", id))
-                        .doOnError(e -> log.error("Error al eliminar el tipo de aplicación: {}", id, e))
+                        .doOnSuccess(v -> log.info(APPLICATION_TYPE.DELETED_SUCCESS, id))
+                        .doOnError(e -> log.error(APPLICATION_TYPE.DELETE_FAILED, id, e))
         );
     }
 

@@ -1,5 +1,6 @@
 package co.com.jhompo.r2dbc.status;
 
+import co.com.jhompo.common.Messages.*;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.r2dbc.entity.StatusEntity;
@@ -31,11 +32,11 @@ public class StatusRepositoryAdapter
 
     @Override
     public Mono<Status> save(Status status) {
-        log.info("Iniciando guardado en BD para el estado: {}", status.getName());
+        log.info(STATUS.DESCRIPTION_CREATE, status.getName());
         return transactionalOperator.transactional(
                 super.save(status)
-                        .doOnSuccess(s -> log.info("Guardado exitoso en BD: {}", s.getName()))
-                        .doOnError(e -> log.error("Error al guardar el estado: {}", status.getName(), e))
+                        .doOnSuccess(s -> log.info(SYSTEM.OPERATION_SUCCESS, s.getName()))
+                        .doOnError(e -> log.error(SYSTEM.OPERATION_ERROR, status.getName(), e))
         );
     }
 
@@ -51,11 +52,11 @@ public class StatusRepositoryAdapter
 
     @Override
     public Mono<Void> deleteById(Integer id) {
-        log.info("Iniciando eliminación en BD para el estado ID: {}", id);
+        log.info(STATUS.DESCRIPTION_DELETE, id);
         return transactionalOperator.transactional(
                 repository.deleteById(id)
-                        .doOnSuccess(v -> log.info("Eliminación exitosa en BD: {}", id))
-                        .doOnError(e -> log.error("Error al eliminar el estado: {}", id, e))
+                        .doOnSuccess(v -> log.info(STATUS.DELETED_SUCCESS, id))
+                        .doOnError(e -> log.error(STATUS.DELETE_FAILED, id, e))
         );
     }
 

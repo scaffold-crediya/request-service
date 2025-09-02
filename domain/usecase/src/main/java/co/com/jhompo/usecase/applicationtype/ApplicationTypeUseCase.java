@@ -1,5 +1,6 @@
 package co.com.jhompo.usecase.applicationtype;
 
+import co.com.jhompo.common.Messages.*;
 import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class ApplicationTypeUseCase {
 
     public Mono<ApplicationType> getApplicationTypeById(Integer id) {
         return repository.findById(id)
-                .switchIfEmpty(Mono.error(new RuntimeException("Status with id " + id + " not found.")));
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(STATUS.NOT_FOUND)));
     }
 
     public Flux<ApplicationType> getAllStatuses() {
@@ -26,9 +27,9 @@ public class ApplicationTypeUseCase {
     }
 
     public Mono<ApplicationType> updateStatus(ApplicationType aplicationType) {
-        // Asegura que el estado exista antes de intentar actualizarlo
+
         return repository.findById(aplicationType.getId())
-                .switchIfEmpty(Mono.error(new RuntimeException("Status with id " + aplicationType.getId() + " not found.")))
+                .switchIfEmpty(Mono.error(new RuntimeException(STATUS.NOT_FOUND)))
                 .flatMap(existingStatus -> repository.save(aplicationType));
     }
 
