@@ -1,6 +1,7 @@
 package co.com.jhompo.api.handler;
 
 
+import co.com.jhompo.common.Messages.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,31 +23,20 @@ public class GlobalErrorHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalErrorHandler.class);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    // 1) Errores de validación de argumentos
+
     @ExceptionHandler(IllegalArgumentException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleIllegalArgument(
             IllegalArgumentException ex, ServerWebExchange exchange) {
-        log.warn("Illegal argument: {}", ex.getMessage());
+        log.warn(SYSTEM.ILLEGAL_STATE, ex.getMessage());
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "Invalid argument",
+                SYSTEM.INVALID_ARGUMENT,
                 ex.getMessage(),
                 exchange.getRequest().getURI().getPath()
         );
     }
 
-    // 2) Errores de seguridad (Spring Security)
-   /* @ExceptionHandler(AccessDeniedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleAccessDenied(
-            AccessDeniedException ex, ServerWebExchange exchange) {
-        log.warn("Access denied: {}", ex.getMessage());
-        return buildErrorResponse(
-                HttpStatus.FORBIDDEN,
-                "Access denied",
-                ex.getMessage(),
-                exchange.getRequest().getURI().getPath()
-        );
-    } */
+
 
     @ExceptionHandler(WebClientRequestException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleWebClientRequestException(WebClientRequestException ex, ServerWebExchange exchange) {
@@ -55,7 +45,7 @@ public class GlobalErrorHandler {
             return buildErrorResponse(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase(),
-                    "El servicio no está disponible. Intente de nuevo más tarde.",
+                    SYSTEM.SERVICE_UNAVAILABLE,
                     exchange.getRequest().getPath().toString()
             );
         }
@@ -64,7 +54,7 @@ public class GlobalErrorHandler {
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Ocurrió un error al comunicarse con un servicio externo.",
+                SYSTEM.EXTERNAL_SERVICE_COMMUNICATION_ERROR,
                 exchange.getRequest().getPath().toString()
         );
     }
@@ -76,14 +66,14 @@ public class GlobalErrorHandler {
             DataIntegrityViolationException ex, ServerWebExchange exchange) {
 
         String errorMessage = ex.getMessage();
-        log.error("Database error: {}", errorMessage);
+        log.error(SYSTEM.DATABASE_ERROR, errorMessage);
 
         // Verificar si es el error específico del índice
         if (errorMessage != null && errorMessage.contains("application_email_idx")) {
             return buildErrorResponse(
                     HttpStatus.CONFLICT,
-                    "Duplicate Key",
-                    "Ya existe una solicitud con este email para el tipo de préstamo seleccionado.",
+                    SYSTEM.DUPLICATE_KEY,
+                    SYSTEM.DUPLICATE_LOAN_REQUEST ,
                     exchange.getRequest().getURI().getPath()
             );
         }
@@ -91,23 +81,22 @@ public class GlobalErrorHandler {
         // Manejo genérico
         return buildErrorResponse(
                 HttpStatus.CONFLICT,
-                "Data integrity violation",
-                "El registro ya existe o viola una restricción de la base de datos.",
+                SYSTEM.DATA_INTEGRITY_VIOLATION,
+                SYSTEM.DATABASE_CONSTRAINT_VIOLATION ,
                 exchange.getRequest().getURI().getPath()
         );
     }
 
     // 4) Catch-all para cualquier otra excepción
     @ExceptionHandler(Exception.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleGenericException(
-            Exception ex, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ErrorResponse>> handleGenericException(Exception ex, ServerWebExchange exchange) {
         log.error("Unhandled exception", ex);
 
         if (ex instanceof NullPointerException) {
             return buildErrorResponse(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Null Pointer Exception",
-                    "Se encontró un valor nulo inesperado.",
+                    SYSTEM.NULL_POINTER_EXCEPTION ,
+                    SYSTEM.UNEXPECTED_NULL_VALUE,
                     exchange.getRequest().getURI().getPath()
             );
         }
@@ -115,7 +104,7 @@ public class GlobalErrorHandler {
         if (ex instanceof IllegalStateException) {
             return buildErrorResponse(
                     HttpStatus.BAD_REQUEST,
-                    "Illegal State",
+                    SYSTEM.ILLEGAL_STATE,
                     ex.getMessage(),
                     exchange.getRequest().getURI().getPath()
             );
@@ -123,7 +112,7 @@ public class GlobalErrorHandler {
 
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Internal Server Error",
+                SYSTEM.INTERNAL_ERROR,
                 ex.getMessage(),
                 exchange.getRequest().getURI().getPath()
         );

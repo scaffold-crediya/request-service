@@ -13,6 +13,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
+import static co.com.jhompo.common.Messages.*;
+
 @RequiredArgsConstructor
 public class LoanApplicationUseCase {
 
@@ -26,19 +28,18 @@ public class LoanApplicationUseCase {
         return verifyEmailExists.userExistsByEmail(loanApplication.getEmail())
                 .flatMap(userExists -> {
                     if (Boolean.FALSE.equals(userExists)) {
-                        return Mono.error(new IllegalArgumentException("El solicitante con email " + loanApplication.getEmail()
-                                + " no existe en el sistema de autenticación."));
+                        return Mono.error(new IllegalArgumentException(LOAN_APPLICATION.EMAIL_NOT_FOUND));
                     }
                     return applicationTypeRepository.findById(loanApplication.getApplicationTypeId());
 
                 })
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("El Tipo de Solicitud no existe.")))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(LOAN_APPLICATION.NOT_FOUND)))
                 .flatMap(applicationType -> {
                     // Lógica para encontrar o crear el estado "PENDIENTE_REVISION"
-                    return statusRepository.findByName("PENDIENTE_REVISION")
+                    return statusRepository.findByName(STATUS.PENDING_REVIEW)
                             .switchIfEmpty(
                                     Mono.defer(() -> statusRepository.save(
-                                            Status.builder().name("PENDIENTE_REVISION").description("Pendiente de revisión por un analista").build()
+                                            Status.builder().name(STATUS.PENDING_REVIEW).description(STATUS.DESCRIPTION_PENDING).build()
                                     ))
                             )
                             .flatMap(pendingStatus -> {
@@ -55,7 +56,7 @@ public class LoanApplicationUseCase {
 
     public Mono<LoanApplication> update(LoanApplication loanApplication) {
         return loanApplicationRepository.findById(loanApplication.getId())
-                .switchIfEmpty(Mono.error(new RuntimeException("Solicitud no encontrada")))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(LOAN_APPLICATION.NOT_FOUND)))
                 .map(existing -> loanApplication) // aquí ya recibes con id
                 .flatMap(loanApplicationRepository::save);
     }
