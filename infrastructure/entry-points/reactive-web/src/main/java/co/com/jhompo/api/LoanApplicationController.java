@@ -11,13 +11,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import static co.com.jhompo.common.Messages.HTTP.*;
 import static co.com.jhompo.common.Messages.*;
-import static org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext;
 import java.util.UUID;
 
 @Slf4j
@@ -36,7 +34,7 @@ public class LoanApplicationController {
     public Mono<LoanApplication> create(@RequestBody LoanApplicationDTO dto) {
         log.info(LOAN_APPLICATION.DESCRIPTION_CREATE, dto);
 
-        return getContext()
+        return ReactiveSecurityContextHolder.getContext()
                 .map(securityContext -> securityContext.getAuthentication())
                 .map(Authentication::getPrincipal)
                 .cast(String.class)

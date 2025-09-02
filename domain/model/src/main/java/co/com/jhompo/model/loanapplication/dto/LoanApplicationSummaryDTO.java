@@ -15,11 +15,11 @@ public class LoanApplicationSummaryDTO {
     private BigDecimal amount;
     private Integer term;
     private String email;
-    //private String name;
+    private String name;
     private String loanTypeName;
     private double interestRate;
     private String statusName;
-    //private BigDecimal baseSalary;
+    private BigDecimal baseSalary;
     private BigDecimal totalApprovedDebt;
 }
 
