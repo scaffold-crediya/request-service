@@ -3,7 +3,6 @@ package co.com.jhompo.r2dbc.application;
 import co.com.jhompo.r2dbc.entity.LoanApplicationEntity;
 import co.com.jhompo.r2dbc.projection.LoanSummaryProjection;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
@@ -37,7 +36,10 @@ public interface LoanApplicationReactiveRepository
         JOIN statuses s ON la.id_status = s.id
         JOIN loan_type lt ON la.id_loan_type = lt.id
         WHERE s.name = :statusName
+        LIMIT :size OFFSET :offset
     """)
-    Flux<LoanSummaryProjection> findSummariesByStatus(@Param("statusName") String statusName, Pageable pageable);
+    Flux<LoanSummaryProjection> findSummariesByStatus(@Param("statusName") String statusName,
+                                                      @Param("size") int size,
+                                                      @Param("offset") long offse);
 
 }
