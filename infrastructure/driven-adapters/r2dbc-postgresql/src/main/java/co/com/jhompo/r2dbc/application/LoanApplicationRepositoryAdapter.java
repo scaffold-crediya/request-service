@@ -1,5 +1,6 @@
 package co.com.jhompo.r2dbc.application;
 
+import co.com.jhompo.common.Messages.*;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
@@ -35,8 +36,8 @@ public class LoanApplicationRepositoryAdapter
     public Mono<LoanApplication> save(LoanApplication loan) {
         return transactionalOperator.transactional(
                 super.save(loan)
-                        .doOnSuccess(u -> log.info("Guardado en BD: {}", u))
-                        .doOnError(e -> log.error("Error al guardar el usuario: {}", loan, e))
+                        .doOnSuccess(u -> log.info(SYSTEM.OPERATION_SUCCESS, u))
+                        .doOnError(e -> log.error(SYSTEM.OPERATION_ERROR, loan, e))
         );
     }
 
