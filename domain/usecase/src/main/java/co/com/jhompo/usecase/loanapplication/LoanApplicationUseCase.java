@@ -1,16 +1,20 @@
 package co.com.jhompo.usecase.loanapplication;
 
+import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
-import co.com.jhompo.model.loanapplication.gateways.UserExistenceGateway;
+import co.com.jhompo.model.user.User;
+import co.com.jhompo.model.user.gateways.UserExistenceGateway;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple3;
 
+import java.util.List;
 import java.util.UUID;
 
 import static co.com.jhompo.common.Messages.*;
@@ -74,7 +78,44 @@ public class LoanApplicationUseCase {
     }
 
     public Flux<LoanApplicationSummaryDTO> findByStatusName(String statusName, int page, int size) {
-        return loanApplicationRepository.findSummariesByStatus(statusName.toUpperCase(), page, size);
+        return loanApplicationRepository.findSummariesByStatus(statusName.toUpperCase(), page, size)
+                .collectList()
+                .flatMapMany(summaries -> {
+                    List<String> emails = summaries.stream()
+                            .map(LoanApplicationSummaryDTO::getEmail)
+                            .distinct()
+                            .toList();
+
+                    return verifyEmailExists.findUserDetailsByEmails(emails)
+                            .collectMap(User::getEmail, user -> user)
+                            .flatMapMany(userMap -> Flux.fromIterable(summaries)
+                                    .map(summary -> {
+                                        User user = userMap.get(summary.getEmail());
+                                        if (user != null) {
+                                            summary.setName(user.getFirstName()); // o getName() según tu clase User
+                                            summary.setBaseSalary(user.getBaseSalary()); // o el campo correcto
+                                        }
+                                        return summary;
+                                    })
+                            );
+                });
+    }
+
+    public Mono<Tuple3<LoanApplication, Status, ApplicationType>> updateStatusAndGetDetails(UUID id, Integer statusId) {
+
+        // 1. Actualizar y guardar el préstamo
+        Mono<LoanApplication> updatedLoanMono = loanApplicationRepository.findById(id)
+                .flatMap(loan -> {
+                    loan.setStatusId(statusId);
+                    return loanApplicationRepository.save(loan);
+                });
+
+        // 2. Obtener los detalles de forma paralela
+        Mono<Status> statusMono = updatedLoanMono.flatMap(loan -> statusRepository.findById(loan.getStatusId()));
+        Mono<ApplicationType> applicationTypeMono = updatedLoanMono.flatMap(loan -> applicationTypeRepository.findById(loan.getApplicationTypeId()));
+
+        // 3. Combinar todos los Monos en una sola tupla
+        return Mono.zip(updatedLoanMono, statusMono, applicationTypeMono);
     }
 
 }
