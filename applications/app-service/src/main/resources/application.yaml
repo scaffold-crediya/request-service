@@ -4,12 +4,12 @@ spring:
   application:
     name: "request-service"
   r2dbc:
-    host: localhost
-    port: 5433
-    database: crediya_request
+    host: ${SPRING_R2DBC_HOST:localhost}
+    port: ${SPRING_R2DBC_PORT:5433}
+    database: ${SPRING_R2DBC_DATABASE:crediya_request}
     schema: public
-    username: jhompo
-    password: pass123
+    username: ${SPRING_R2DBC_USERNAME:jhompo}
+    password: ${SPRING_R2DBC_PASSWORD:pass123}
   devtools:
     add-properties: false
   h2:
@@ -31,7 +31,7 @@ cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
 microservices:
   autenticacion:
-    url: "http://localhost:8080"
+    url: ${AUTH_APP_URL:http://localhost:8080}
 security:
   jwt:
     # Genera una clave secreta segura, por ejemplo, con un generador online

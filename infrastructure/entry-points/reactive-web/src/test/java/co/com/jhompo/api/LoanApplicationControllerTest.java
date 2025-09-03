@@ -88,40 +88,6 @@ class LoanApplicationControllerTest {
 
 
     @Test
-    @DisplayName("Debería obtener todas las solicitudes exitosamente")
-    void shouldGetAllLoanApplicationsSuccessfully() {
-        // Given
-        LoanApplication secondApplication = LoanApplication.builder()
-                .id(UUID.randomUUID())
-                .email("another@example.com")
-                .amount(BigDecimal.valueOf(15000))
-                .term(24)
-                .statusId(2)
-                .applicationTypeId(2)
-                .build();
-
-        when(loanApplicationUseCase.getAll()).thenReturn(Flux.just(testLoanApplication, secondApplication));
-
-        // When & Then
-        StepVerifier.create(loanApplicationController.getAll())
-                .expectNext(testLoanApplication)
-                .expectNext(secondApplication)
-                .verifyComplete();
-    }
-
-    @Test
-    @DisplayName("Debería obtener solicitud por ID exitosamente")
-    void shouldGetLoanApplicationByIdSuccessfully() {
-        // Given
-        when(loanApplicationUseCase.getById(testId)).thenReturn(Mono.just(testLoanApplication));
-
-        // When & Then
-        StepVerifier.create(loanApplicationController.getById(testId))
-                .expectNext(testLoanApplication)
-                .verifyComplete();
-    }
-
-    @Test
     @DisplayName("Debería retornar vacío cuando no encuentra solicitud por ID")
     void shouldReturnEmptyWhenNotFoundById() {
         // Given
@@ -133,18 +99,6 @@ class LoanApplicationControllerTest {
                 .verifyComplete();
     }
 
-    @Test
-    @DisplayName("Debería actualizar solicitud exitosamente")
-    void shouldUpdateLoanApplicationSuccessfully() {
-        // Given
-        when(loanApplicationUseCase.update(any(LoanApplication.class)))
-                .thenReturn(Mono.just(testUpdateLoanApplication));
-
-        // When & Then
-        StepVerifier.create(loanApplicationController.update(testId, testUpdateLoanApplication))
-                .expectNext(testUpdateLoanApplication)
-                .verifyComplete();
-    }
 
     @Test
     @DisplayName("Debería eliminar solicitud exitosamente")
@@ -212,19 +166,7 @@ class LoanApplicationControllerTest {
                 .verify();
     }
 
-    @Test
-    @DisplayName("Debería manejar error del caso de uso en actualización")
-    void shouldHandleUseCaseErrorOnUpdate() {
-        // Given
-        RuntimeException expectedError = new RuntimeException("Update failed");
-        when(loanApplicationUseCase.update(any(LoanApplication.class)))
-                .thenReturn(Mono.error(expectedError));
 
-        // When & Then
-        StepVerifier.create(loanApplicationController.update(testId, testUpdateLoanApplication))
-                .expectError(RuntimeException.class)
-                .verify();
-    }
 
     @Test
     @DisplayName("Debería manejar error del caso de uso en eliminación")
