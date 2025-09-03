@@ -18,6 +18,25 @@ spring:
       path: "/h2"
   profiles:
     include: null
+
+  # Configuración para Gmail
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME:jhompocr@gmail.com}
+    password: ${EMAIL_PASSWORD:rosa vijg vmhi cnov}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    debug: false
+
 management:
   endpoints:
     web:
@@ -43,3 +62,11 @@ logging:
     io.r2dbc.postgresql: DEBUG
     org.springframework.r2dbc.core: DEBUG
     org.springframework.data.r2dbc: DEBUG
+
+
+  
+  # Plantillas de correo
+
+    
+
+
