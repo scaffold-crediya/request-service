@@ -2,6 +2,7 @@ package co.com.jhompo.usecase.loanapplication;
 
 import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
+import co.com.jhompo.model.gateways.EmailGateway;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
 import co.com.jhompo.model.user.User;
@@ -9,6 +10,7 @@ import co.com.jhompo.model.user.gateways.UserExistenceGateway;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
+import co.com.jhompo.usecase.email.EmailUseCase;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,6 +26,7 @@ public class LoanApplicationUseCase {
 
 
     private final UserExistenceGateway verifyEmailExists;
+    private final EmailGateway emailGateway;
     private final LoanApplicationRepository loanApplicationRepository;
     private final ApplicationTypeRepository applicationTypeRepository;
     private final StatusRepository statusRepository;
@@ -103,19 +106,32 @@ public class LoanApplicationUseCase {
 
     public Mono<Tuple3<LoanApplication, Status, ApplicationType>> updateStatusAndGetDetails(UUID id, Integer statusId) {
 
-        // 1. Actualizar y guardar el préstamo
+        //Actualizar y guardar el préstamo
         Mono<LoanApplication> updatedLoanMono = loanApplicationRepository.findById(id)
                 .flatMap(loan -> {
                     loan.setStatusId(statusId);
                     return loanApplicationRepository.save(loan);
                 });
 
-        // 2. Obtener los detalles de forma paralela
+        //Obtener los detalles de forma paralela
         Mono<Status> statusMono = updatedLoanMono.flatMap(loan -> statusRepository.findById(loan.getStatusId()));
         Mono<ApplicationType> applicationTypeMono = updatedLoanMono.flatMap(loan -> applicationTypeRepository.findById(loan.getApplicationTypeId()));
 
-        // 3. Combinar todos los Monos en una sola tupla
-        return Mono.zip(updatedLoanMono, statusMono, applicationTypeMono);
+        //Combinar todos los Monos en una sola tupla
+        return Mono.zip(updatedLoanMono, statusMono, applicationTypeMono)
+                .doOnNext(tuple -> {
+                    LoanApplication updatedLoan = tuple.getT1();
+                    Status newStatus = tuple.getT2();
+
+                    String subject = "Actualización de estado de tu solicitud de préstamo";
+                    String body = "Estimado usuario,\n\n"
+                            + "El estado de su solicitud de préstamo con ID: " + updatedLoan.getId()
+                            + " ha sido actualizado a: " + newStatus.getName() + ".\n\n"
+                            + "Gracias.";
+
+                    // El .subscribe() es para "disparar" el flujo de envío de manera no bloqueante.
+                    emailGateway.sendEmail(updatedLoan.getEmail(), subject, body).subscribe();
+                });
     }
 
 }
