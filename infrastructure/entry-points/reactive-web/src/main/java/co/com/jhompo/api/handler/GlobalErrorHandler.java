@@ -78,6 +78,15 @@ public class GlobalErrorHandler {
             );
         }
 
+        if (errorMessage != null && errorMessage.contains("fk_application_status")) {
+            return buildErrorResponse(
+                    HttpStatus.CONFLICT,
+                    SYSTEM.DUPLICATE_KEY,
+                    SYSTEM.STATUS_NOT_EXISTS,
+                    exchange.getRequest().getURI().getPath()
+            );
+        }
+
         // Manejo genérico
         return buildErrorResponse(
                 HttpStatus.CONFLICT,
