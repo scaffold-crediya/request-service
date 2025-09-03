@@ -73,6 +73,8 @@ public final class Messages {
 
         public static final String DESCRIPTION_CREATE = "Crear nueva solicitud de crédito";
         public static final String DESCRIPTION_UPDATE = "Actualizar solicitud de crédito";
+        public static final String DESCRIPTION_STATUS_UPDATE =  "Actualizar el estado de una aplicación";
+
         public static final String DESCRIPTION_DELETE=  "Eliminar solicitud de crédito";
         public static final String DESCRIPTION_GET_ALL=  "Listar todas las solicitudes de crédito";
         public static final String DESCRIPTION_FIND_BY_ID = "Buscar solicitud por ID";
@@ -218,6 +220,7 @@ public final class Messages {
         public static final String INVALID_RANGE = "Rango inválido";
         public static final String RESOURCE_NOT_FOUND = "Recurso no encontrado";
         public static final String DUPLICATE_ENTRY = "Entrada duplicada";
+        public static final String STATUS_NOT_EXISTS = "No existe el Estado ingresado";
 
         private SYSTEM() {}
     }

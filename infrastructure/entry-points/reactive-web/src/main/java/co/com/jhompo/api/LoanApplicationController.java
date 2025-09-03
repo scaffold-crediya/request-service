@@ -1,9 +1,12 @@
 package co.com.jhompo.api;
 
 import co.com.jhompo.api.dtos.LoanApplicationDTO;
+import co.com.jhompo.api.dtos.LoanApplicationResponseDTO;
+import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import co.com.jhompo.api.mapper.LoanApplicationMapper;
 import co.com.jhompo.model.loanapplication.LoanApplication;
+import co.com.jhompo.model.user.User;
 import co.com.jhompo.usecase.loanapplication.LoanApplicationUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,10 +31,33 @@ public class LoanApplicationController {
     private final LoanApplicationUseCase loanApplicationUseCase;
     private final LoanApplicationMapper mapper;
 
+
+    @Operation(summary = LOAN_APPLICATION.DESCRIPTION_GET_ALL)
+    @GetMapping
+    public Flux<LoanApplicationDTO> getAll() {
+        log.info(LOAN_APPLICATION.DESCRIPTION_GET_ALL);
+        return loanApplicationUseCase.getAll()
+                .map(mapper::toDto)
+                .doOnComplete(() -> log.info(LOAN_APPLICATION.FOUND_SUCCESS))
+                .doOnError(error -> log.error(LOAN_APPLICATION.LIST_ERROR, error));
+    }
+
+    @Operation(summary = LOAN_APPLICATION.DESCRIPTION_FIND_BY_ID)
+    @GetMapping("/{id}")
+    public Mono<LoanApplicationDTO> getById(@PathVariable(value = "id") UUID id) {
+        log.info(LOAN_APPLICATION.DESCRIPTION_FIND_BY_ID, id);
+
+        return loanApplicationUseCase.getById(id)
+                .map(mapper::toDto)
+                .doOnSuccess(app -> log.info(LOAN_APPLICATION.FOUND_SUCCESS, app))
+                .doOnError(error -> log.error(LOAN_APPLICATION.NOT_FOUND, id, error));
+    }
+
+
     @Operation(summary = LOAN_APPLICATION.DESCRIPTION_CREATE)
     @PostMapping("/registrar")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<LoanApplication> create(@RequestBody LoanApplicationDTO dto) {
+    public Mono<LoanApplicationDTO> create(@RequestBody LoanApplicationDTO dto) {
         log.info(LOAN_APPLICATION.DESCRIPTION_CREATE, dto);
 
         return ReactiveSecurityContextHolder.getContext()
@@ -44,37 +70,52 @@ public class LoanApplicationController {
                     }
                     return loanApplicationUseCase.create(mapper.toEntityForCreate(dto));
                 })
+                .map(mapper::toDto)
                 .doOnSuccess(app -> log.info(LOAN_APPLICATION.CREATED_SUCCESS, app))
                 .doOnError(error -> log.error(LOAN_APPLICATION.CREATION_FAILED, error));
     }
 
     @Operation(summary = LOAN_APPLICATION.DESCRIPTION_UPDATE)
     @PutMapping("/{id}")
-    public Mono<LoanApplication> update(@PathVariable(value = "id") UUID id, @RequestBody LoanApplication dto) {
+    public Mono<LoanApplicationDTO> update(@PathVariable(value = "id") UUID id, @RequestBody LoanApplicationDTO dto) {
         log.info(LOAN_APPLICATION.DESCRIPTION_UPDATE, id, dto);
-        dto.setId(id);
-        return loanApplicationUseCase.update(dto)
+
+        LoanApplication loan = LoanApplication.builder()
+                .id(id)
+                .term(dto.getTerm())
+                .amount(dto.getAmount())
+                .email(dto.getEmail())
+                .statusId(dto.getStatusId())
+                .applicationTypeId(dto.getApplicationTypeId())
+                .build();
+
+        return loanApplicationUseCase.update(loan)
+                .map(mapper::toDto)
                 .doOnSuccess(app -> log.info(LOAN_APPLICATION.UPDATED_SUCCESS, app))
                 .doOnError(error -> log.error(LOAN_APPLICATION.UPDATE_FAILED, id, error));
     }
 
-    @Operation(summary = LOAN_APPLICATION.DESCRIPTION_GET_ALL)
-    @GetMapping
-    public Flux<LoanApplication> getAll() {
-        log.info(LOAN_APPLICATION.DESCRIPTION_GET_ALL);
-        return loanApplicationUseCase.getAll()
-                .doOnComplete(() -> log.info(LOAN_APPLICATION.FOUND_SUCCESS))
-                .doOnError(error -> log.error(LOAN_APPLICATION.LIST_ERROR, error));
+    @Operation(summary = LOAN_APPLICATION.DESCRIPTION_STATUS_UPDATE)
+    @PutMapping("/{id}/status/{statusId}")
+    public Mono<LoanApplicationResponseDTO> updateStatus(
+            @PathVariable("id") UUID id,
+            @PathVariable("statusId") Integer statusId) {
+
+        return loanApplicationUseCase.updateStatusAndGetDetails(id, statusId)
+                .map(tuple -> {
+                    LoanApplicationResponseDTO responseDTO = new LoanApplicationResponseDTO();
+
+                    responseDTO.setAmount(tuple.getT1().getAmount());
+                    responseDTO.setTerm(tuple.getT1().getTerm());
+                    responseDTO.setEmail(tuple.getT1().getEmail());
+                    responseDTO.setStatusName(tuple.getT2().getName());
+                    responseDTO.setLoanTypeName(tuple.getT3().getName());
+
+                    return responseDTO;
+                });
     }
 
-    @Operation(summary = LOAN_APPLICATION.DESCRIPTION_FIND_BY_ID)
-    @GetMapping("/{id}")
-    public Mono<LoanApplication> getById(@PathVariable(value = "id") UUID id) {
-        log.info(LOAN_APPLICATION.DESCRIPTION_FIND_BY_ID, id);
-        return loanApplicationUseCase.getById(id)
-                .doOnSuccess(app -> log.info(LOAN_APPLICATION.FOUND_SUCCESS, app))
-                .doOnError(error -> log.error(LOAN_APPLICATION.NOT_FOUND, id, error));
-    }
+
 
     @Operation(summary = LOAN_APPLICATION.DESCRIPTION_DELETE)
     @DeleteMapping("/{id}")
