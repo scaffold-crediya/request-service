@@ -1,4 +1,4 @@
-package co.com.jhompo.r2dbc.projection;
+package co.com.jhompo.r2dbc.repositories.loan_application.projection;
 
 import java.math.BigDecimal;
 

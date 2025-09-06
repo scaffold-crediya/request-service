@@ -1,4 +1,4 @@
-package co.com.jhompo.r2dbc.status;
+package co.com.jhompo.r2dbc.repositories.status;
 
 
 import co.com.jhompo.r2dbc.entity.StatusEntity;
