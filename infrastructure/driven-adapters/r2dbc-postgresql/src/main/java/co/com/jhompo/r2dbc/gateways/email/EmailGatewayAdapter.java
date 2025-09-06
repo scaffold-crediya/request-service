@@ -1,4 +1,4 @@
-package co.com.jhompo.r2dbc.email;
+package co.com.jhompo.r2dbc.gateways.email;
 
 import co.com.jhompo.model.gateways.EmailGateway;
 import lombok.RequiredArgsConstructor;
