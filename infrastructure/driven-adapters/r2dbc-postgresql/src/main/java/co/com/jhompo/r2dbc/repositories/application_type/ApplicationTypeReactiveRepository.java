@@ -1,4 +1,4 @@
-package co.com.jhompo.r2dbc.application_type;
+package co.com.jhompo.r2dbc.repositories.application_type;
 
 import co.com.jhompo.r2dbc.entity.ApplicationTypeEntity;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
