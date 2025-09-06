@@ -1,11 +1,10 @@
-package co.com.jhompo.r2dbc.status;
+package co.com.jhompo.r2dbc.repositories.status;
 
 import co.com.jhompo.common.Messages.*;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.r2dbc.entity.StatusEntity;
 import co.com.jhompo.r2dbc.helper.ReactiveAdapterOperations;
-import co.com.jhompo.r2dbc.mappers.StatusMapper;
 import org.reactivecommons.utils.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,13 +20,12 @@ public class StatusRepositoryAdapter
 
     private static final Logger log = LoggerFactory.getLogger(StatusRepositoryAdapter.class);
     private final TransactionalOperator transactionalOperator;
-    private final StatusMapper statusMapper;
 
-    public StatusRepositoryAdapter(StatusReactiveRepository repository, ObjectMapper mapper, TransactionalOperator transactionalOperator, StatusMapper statusMapper) {
+
+    public StatusRepositoryAdapter(StatusReactiveRepository repository, ObjectMapper mapper, TransactionalOperator transactionalOperator) {
         // Le decimos al helper cómo mapear de la Entidad de BD (StatusEntity) al Objeto de Dominio (Status)
         super(repository, mapper, entity -> mapper.map(entity, Status.class));
         this.transactionalOperator = transactionalOperator;
-        this.statusMapper = statusMapper;
     }
 
     @Override
@@ -62,7 +60,7 @@ public class StatusRepositoryAdapter
 
     @Override
     public Mono<Status> findByName(String name) {
-        return repository.findByName(name).map(statusMapper::toDomain);
+        return repository.findByName(name).map(status -> mapper.map(status, Status.class));
     }
 
 

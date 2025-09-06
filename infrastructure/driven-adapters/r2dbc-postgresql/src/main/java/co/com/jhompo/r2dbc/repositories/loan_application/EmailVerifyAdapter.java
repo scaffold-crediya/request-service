@@ -1,10 +1,8 @@
-package co.com.jhompo.r2dbc.application;
+package co.com.jhompo.r2dbc.repositories.loan_application;
 
-import co.com.jhompo.common.Messages.*;
 import co.com.jhompo.model.user.User;
 import co.com.jhompo.model.user.gateways.UserExistenceGateway;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;

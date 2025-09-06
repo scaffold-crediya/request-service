@@ -3,6 +3,7 @@ package co.com.jhompo.usecase.loanapplication;
 import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
 import co.com.jhompo.model.gateways.EmailGateway;
+import co.com.jhompo.model.gateways.NotificationGateway;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
 import co.com.jhompo.model.user.User;
@@ -10,7 +11,6 @@ import co.com.jhompo.model.user.gateways.UserExistenceGateway;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
-import co.com.jhompo.usecase.email.EmailUseCase;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,11 +25,14 @@ import static co.com.jhompo.common.Messages.*;
 public class LoanApplicationUseCase {
 
 
-    private final UserExistenceGateway verifyEmailExists;
-    private final EmailGateway emailGateway;
+
     private final LoanApplicationRepository loanApplicationRepository;
     private final ApplicationTypeRepository applicationTypeRepository;
     private final StatusRepository statusRepository;
+
+    private final UserExistenceGateway verifyEmailExists;
+    private final EmailGateway emailGateway;
+    private final NotificationGateway notificationGateway;
 
     public Mono<LoanApplication> create(LoanApplication loanApplication) {
         return verifyEmailExists.userExistsByEmail(loanApplication.getEmail())
@@ -123,14 +126,12 @@ public class LoanApplicationUseCase {
                     LoanApplication updatedLoan = tuple.getT1();
                     Status newStatus = tuple.getT2();
 
-                    String subject = "Actualización de estado de tu solicitud de préstamo";
-                    String body = "Estimado usuario,\n\n"
-                            + "El estado de su solicitud de préstamo con ID: " + updatedLoan.getId()
-                            + " ha sido actualizado a: " + newStatus.getName() + ".\n\n"
-                            + "Gracias.";
-
-                    // El .subscribe() es para "disparar" el flujo de envío de manera no bloqueante.
-                    emailGateway.sendEmail(updatedLoan.getEmail(), subject, body).subscribe();
+                    // Llama al metodo de la interfaz. No sabe que por debajo se usa SQS.
+                    notificationGateway.sendNotification(
+                            updatedLoan.getId().toString(),
+                            newStatus.getName(),
+                            updatedLoan.getEmail()
+                    ).subscribe();
                 });
     }
 

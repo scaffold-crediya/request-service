@@ -1,7 +1,7 @@
-package co.com.jhompo.r2dbc.application;
+package co.com.jhompo.r2dbc.repositories.loan_application;
 
 import co.com.jhompo.r2dbc.entity.LoanApplicationEntity;
-import co.com.jhompo.r2dbc.projection.LoanSummaryProjection;
+import co.com.jhompo.r2dbc.repositories.loan_application.projection.LoanSummaryProjection;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;

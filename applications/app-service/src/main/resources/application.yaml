@@ -22,6 +22,7 @@ spring:
   # Configuración para Gmail
   mail:
     host: smtp.gmail.com
+    default-encoding: UTF-8
     port: 587
     username: ${EMAIL_USERNAME:jhompocr@gmail.com}
     password: ${EMAIL_PASSWORD:rosa vijg vmhi cnov}
@@ -68,5 +69,7 @@ logging:
   # Plantillas de correo
 
     
-
+aws:
+  sqs:
+    queue-url: "https://sqs.us-east-1.amazonaws.com/771174006840/queue-approvals-requests"
 

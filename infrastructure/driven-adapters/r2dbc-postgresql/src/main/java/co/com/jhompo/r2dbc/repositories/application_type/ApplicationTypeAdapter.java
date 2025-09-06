@@ -1,4 +1,4 @@
-package co.com.jhompo.r2dbc.application_type;
+package co.com.jhompo.r2dbc.repositories.application_type;
 
 import co.com.jhompo.common.Messages.*;
 import co.com.jhompo.model.applicationtype.ApplicationType;
