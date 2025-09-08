@@ -1,6 +1,6 @@
 package co.com.jhompo.r2dbc.repositories.loan_application;
 
-import co.com.jhompo.common.Messages.*;
+import co.com.jhompo.util.Messages.*;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import co.com.jhompo.model.loanapplication.gateways.LoanApplicationRepository;
@@ -44,6 +44,12 @@ public class LoanApplicationRepositoryAdapter
     @Override
     public Mono<Void> deleteById(UUID id) {
         return repository.deleteById(id);
+    }
+
+    @Override
+    public Flux<LoanApplication> findByEmailAndStatusId(String email, Integer statusId) {
+        return repository.findByEmailAndStatusId(email,statusId)
+                .map(this::toEntity);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package co.com.jhompo.api.handler;
 
 
-import co.com.jhompo.common.Messages.*;
+import co.com.jhompo.util.Messages.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;

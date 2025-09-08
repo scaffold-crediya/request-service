@@ -21,5 +21,7 @@ public class LoanApplicationSummaryDTO {
     private String statusName;
     private BigDecimal baseSalary;
     private BigDecimal totalApprovedDebt;
+    private Boolean automaticValidation; // nuevo
+    private Integer loanTypeId;
 }
 

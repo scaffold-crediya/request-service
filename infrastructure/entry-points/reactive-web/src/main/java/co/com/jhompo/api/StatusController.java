@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static co.com.jhompo.common.Messages.*;
+import static co.com.jhompo.util.Messages.*;
 
 @Slf4j
 @RestController
