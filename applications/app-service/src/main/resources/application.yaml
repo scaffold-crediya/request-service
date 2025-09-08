@@ -65,11 +65,8 @@ logging:
     org.springframework.data.r2dbc: DEBUG
 
 
-  
-  # Plantillas de correo
-
-    
 aws:
   sqs:
-    queue-url: "https://sqs.us-east-1.amazonaws.com/771174006840/queue-approvals-requests"
+    approvals-queue-url: ${VALIDATION_QUEUE_URL:https://sqs.us-east-1.amazonaws.com/771174006840/queue-approvals-requests}
+    validation-queue-url: ${APPROVALS_QUEUE_URL:https://sqs.us-east-1.amazonaws.com/771174006840/queue-validation-requests}
 

@@ -18,4 +18,6 @@ public interface LoanApplicationRepository {
     Flux<LoanApplicationSummaryDTO> findSummariesByStatus(String statusName, int page, int size);
 
     Mono<Void> deleteById(UUID id);
+
+    Flux<LoanApplication> findByEmailAndStatusId(String email, Integer statusId);
 }

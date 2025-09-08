@@ -2,11 +2,9 @@ package co.com.jhompo.api;
 
 import co.com.jhompo.api.dtos.LoanApplicationDTO;
 import co.com.jhompo.api.dtos.LoanApplicationResponseDTO;
-import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
 import co.com.jhompo.api.mapper.LoanApplicationMapper;
 import co.com.jhompo.model.loanapplication.LoanApplication;
-import co.com.jhompo.model.user.User;
 import co.com.jhompo.usecase.loanapplication.LoanApplicationUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +16,7 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import static co.com.jhompo.common.Messages.*;
+import static co.com.jhompo.util.Messages.*;
 import java.util.UUID;
 
 @Slf4j
