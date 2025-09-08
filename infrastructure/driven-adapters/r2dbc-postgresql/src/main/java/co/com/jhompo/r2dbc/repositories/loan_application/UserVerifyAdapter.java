@@ -12,7 +12,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class EmailVerifyAdapter implements UserExistenceGateway {
+public class UserVerifyAdapter implements UserExistenceGateway {
 
     private final WebClient authWebClient; // Inyectaremos un WebClient configurado
     private final String uri = "/api/v1/usuarios";

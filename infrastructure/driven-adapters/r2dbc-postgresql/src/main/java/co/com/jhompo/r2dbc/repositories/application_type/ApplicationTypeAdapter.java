@@ -1,6 +1,6 @@
 package co.com.jhompo.r2dbc.repositories.application_type;
 
-import co.com.jhompo.common.Messages.*;
+import co.com.jhompo.util.Messages.*;
 import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
 import co.com.jhompo.r2dbc.entity.ApplicationTypeEntity;

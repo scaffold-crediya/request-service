@@ -1,8 +1,11 @@
 package co.com.jhompo.r2dbc.gateways.aws;
 
 import co.com.jhompo.model.gateways.NotificationGateway;
+import co.com.jhompo.model.loanapplication.dto.LoanValidation;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.regions.Region;
@@ -15,17 +18,15 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 public class SQSNotificationGateway implements NotificationGateway {
 
     private final SqsAsyncClient sqsAsyncClient;
-    private final String colaUrl = "https://sqs.us-east-1.amazonaws.com/771174006840/queue-approvals-requests";
+    private final ObjectMapper objectMapper;
 
-    /*public SQSNotificationGateway(SqsAsyncClient sqsAsyncClient) {
-        this.sqsAsyncClient = sqsAsyncClient;
-    }*/
 
-    public SQSNotificationGateway() {
-        this.sqsAsyncClient = SqsAsyncClient.builder()
-                .region(Region.of("us-east-1"))
-                .build();
-    }
+    @Value("${aws.sqs.validation-queue-url}")
+    private String validationQueueUrl;
+
+    @Value("${aws.sqs.approvals-queue-url}")
+    private String approvalsQueueUrl;
+
 
     @Override
     public Mono<Void> sendNotification(String loanId, String status, String email) {
@@ -34,7 +35,7 @@ public class SQSNotificationGateway implements NotificationGateway {
         log.info("Sending message to SQS: {}", messageBody);
 
         SendMessageRequest request = SendMessageRequest.builder()
-                .queueUrl(colaUrl)
+                .queueUrl(approvalsQueueUrl)
                 .messageBody(messageBody)
                 .build();
 
@@ -43,7 +44,21 @@ public class SQSNotificationGateway implements NotificationGateway {
                 .doOnSuccess(response -> log.info("*****Message sent successfully. MessageId: {}", response.messageId()))
                 .doOnError(error -> log.error("*****Failed to send message to SQS: {}", error.getMessage()))
                 .then();
+    }
 
 
+    @Override
+    public Mono<Void> sendForValidation(LoanValidation message) {
+        try {
+            String payload = objectMapper.writeValueAsString(message);
+            SendMessageRequest req = SendMessageRequest.builder()
+                    .queueUrl(validationQueueUrl)
+                    .messageBody(payload)
+                    .build();
+
+            return Mono.fromFuture(() -> sqsAsyncClient.sendMessage(req)).then();
+        } catch (Exception e) {
+            return Mono.error(e);
+        }
     }
 }
