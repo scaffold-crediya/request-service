@@ -1,6 +1,6 @@
 package co.com.jhompo.usecase.applicationtype;
 
-import co.com.jhompo.common.Messages.*;
+import co.com.jhompo.util.Messages.*;
 import co.com.jhompo.model.applicationtype.ApplicationType;
 import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
 import lombok.RequiredArgsConstructor;

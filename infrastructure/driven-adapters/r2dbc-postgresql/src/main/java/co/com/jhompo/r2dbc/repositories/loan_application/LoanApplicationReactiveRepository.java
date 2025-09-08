@@ -1,5 +1,6 @@
 package co.com.jhompo.r2dbc.repositories.loan_application;
 
+import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.r2dbc.entity.LoanApplicationEntity;
 import co.com.jhompo.r2dbc.repositories.loan_application.projection.LoanSummaryProjection;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +17,10 @@ public interface LoanApplicationReactiveRepository
         extends ReactiveCrudRepository<LoanApplicationEntity, UUID>, ReactiveQueryByExampleExecutor<LoanApplicationEntity> {
 
     @Query("SELECT la.* FROM application la JOIN statuses s ON la.id_status = s.id WHERE s.name = :statusName")
-    Flux<LoanApplicationEntity> findByStatusName(@Param("statusName") String statusName, PageRequest pageRequest);
+    Flux<LoanApplicationEntity> findByStatusName(@Param("statusName") String statusName);
+
+
+    Flux<LoanApplicationEntity> findByEmailAndStatusId(String email, Integer statusId);
 
 
 

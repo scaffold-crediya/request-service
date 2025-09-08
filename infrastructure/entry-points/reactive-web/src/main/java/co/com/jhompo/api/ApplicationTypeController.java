@@ -3,7 +3,6 @@ package co.com.jhompo.api;
 import co.com.jhompo.api.dtos.ApplicationTypeDTO;
 import co.com.jhompo.api.mapper.ApplicationTypeMapper;
 import co.com.jhompo.usecase.applicationtype.ApplicationTypeUseCase;
-import io.netty.handler.logging.LogLevel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static co.com.jhompo.common.Messages.*;
+import static co.com.jhompo.util.Messages.*;
 
 @Slf4j
 @RestController

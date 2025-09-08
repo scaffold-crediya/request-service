@@ -1,6 +1,6 @@
 package co.com.jhompo.r2dbc.repositories.status;
 
-import co.com.jhompo.common.Messages.*;
+import co.com.jhompo.util.Messages.*;
 import co.com.jhompo.model.status.Status;
 import co.com.jhompo.model.status.gateways.StatusRepository;
 import co.com.jhompo.r2dbc.entity.StatusEntity;

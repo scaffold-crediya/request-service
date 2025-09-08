@@ -1,4 +1,4 @@
-package co.com.jhompo.common;
+package co.com.jhompo.util;
 
 public final class Messages {
 
