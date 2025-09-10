@@ -55,9 +55,9 @@ microservices:
 security:
   jwt:
     # Genera una clave secreta segura, por ejemplo, con un generador online
-    secret-key: "VGhpcy1Jcy1BLVNlY3JldC1LZXktRm9yLUpyZWRpdG9zLVNlcnZpY2U="
+    secret-key: ${JWT_SECRET_KEY:VGhpcy1Jcy1BLVNlY3JldC1LZXktRm9yLUpyZWRpdG9zLVNlcnZpY2U=}
     # Expiración en milisegundos (ej. 1 hora)
-    expiration-time: 3600000
+    expiration-time: ${JWT_EXPIRATION_TIME:3600000}
 logging:
   level:
     io.r2dbc.postgresql: DEBUG
@@ -70,3 +70,18 @@ aws:
     approvals-queue-url: ${VALIDATION_QUEUE_URL:https://sqs.us-east-1.amazonaws.com/771174006840/queue-approvals-requests}
     validation-queue-url: ${APPROVALS_QUEUE_URL:https://sqs.us-east-1.amazonaws.com/771174006840/queue-validation-requests}
 
+cloud:
+  aws:
+    region:
+      static: us-east-1  # Especifica la región donde está tu cola SQS
+    credentials:
+      profile: default
+    sqs:
+      enabled: true
+      endpoint: https://sqs.us-east-1.amazonaws.com  # Endpoint de SQS
+      listener:
+        max-concurrent-messages: 10  # Máximo de mensajes concurrentes
+        max-messages-per-poll: 10    # Mensajes por polling
+        poll-timeout: 20             # Timeout del polling en segundos
+        visibility-timeout: 30       # Timeout de visibilidad en segundos
+        wait-time-out: 20           # Long polling timeout
