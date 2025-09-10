@@ -1,6 +1,7 @@
 package co.com.jhompo.api.security;
 
 import co.com.jhompo.api.handler.CustomAccessDeniedHandler;
+import co.com.jhompo.api.handler.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -13,9 +14,15 @@ import static co.com.jhompo.util.Messages.ROLE.*;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthenticationEntryPoint customAuthEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          CustomAuthenticationEntryPoint customAuthEntryPoint,
+                          CustomAccessDeniedHandler customAccessDeniedHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customAuthEntryPoint = customAuthEntryPoint;
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
 
     @Bean
@@ -45,7 +52,10 @@ public class SecurityConfig {
                         // Todas las demás peticiones deben estar autenticadas
                         .anyExchange().authenticated()
                 )
-                .exceptionHandling(e -> e.accessDeniedHandler(new CustomAccessDeniedHandler()))
+                .exceptionHandling(e -> e
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                        .authenticationEntryPoint(customAuthEntryPoint)
+                )
                 // Agregar nuestro filtro JWT a la cadena de filtros de seguridad
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable) // Deshabilitar la autenticación HTTP básica y el form inicio de sesión

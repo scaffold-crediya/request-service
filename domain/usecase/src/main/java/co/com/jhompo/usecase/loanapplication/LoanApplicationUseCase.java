@@ -16,10 +16,12 @@ import co.com.jhompo.util.AmortizationUtils;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,7 +40,7 @@ public class LoanApplicationUseCase {
     private final UserExistenceGateway verifyEmailExists;
     private final EmailGateway emailGateway;
     private final NotificationGateway notificationGateway;
-    private final TransactionalOperator txOperator;
+
 
     public Mono<LoanApplication> create(LoanApplication loanApplication) {
         return verifyEmailExists.userExistsByEmail(loanApplication.getEmail())
@@ -47,22 +49,32 @@ public class LoanApplicationUseCase {
                         return Mono.error(new IllegalArgumentException(LOAN_APPLICATION.EMAIL_NOT_FOUND));
                     }
                     return applicationTypeRepository.findById(loanApplication.getApplicationTypeId());
-
                 })
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(LOAN_APPLICATION.NOT_FOUND)))
                 .flatMap(applicationType -> {
+                    // ✅ Validar monto contra el rango del loan_type
+                    if (loanApplication.getAmount().compareTo(applicationType.getMinimum_amount()) < 0 ||
+                            loanApplication.getAmount().compareTo(applicationType.getMaximum_amount()) > 0) {
+                        return Mono.error(new IllegalArgumentException(
+                                String.format("El monto solicitado (%,.2f) está fuera del rango permitido: mínimo %,.2f y máximo %,.2f",
+                                        loanApplication.getAmount(),
+                                        applicationType.getMinimum_amount(),
+                                        applicationType.getMaximum_amount()
+                                )
+                        ));
+                    }
+
                     // Lógica para encontrar o crear el estado "PENDIENTE_REVISION"
                     return statusRepository.findByName(STATUS.PENDING_REVIEW)
                             .switchIfEmpty(
                                     Mono.defer(() -> statusRepository.save(
                                             Status.builder()
                                                     .name(STATUS.PENDING_REVIEW)
-                                                    .description(STATUS.DESCRIPTION_PENDING
-                                                    ).build()
+                                                    .description(STATUS.DESCRIPTION_PENDING)
+                                                    .build()
                                     ))
                             )
                             .flatMap(pendingStatus -> {
-                                // Aquí se asignan el tipo de aplicación y el estado a la solicitud
                                 loanApplication.setStatusId(pendingStatus.getId());
                                 loanApplication.setApplicationTypeId(applicationType.getId());
                                 return loanRepository.save(loanApplication)
@@ -71,7 +83,6 @@ public class LoanApplicationUseCase {
                                                         ? handleAutomaticValidation(savedApp, applicationType, 0).thenReturn(savedApp)
                                                         : Mono.just(savedApp)
                                         );
-
                             });
                 });
     }
@@ -147,9 +158,13 @@ public class LoanApplicationUseCase {
         return verifyEmailExists.findUserDetailsByEmails(List.of(app.getEmail()))
                 .next()
                 .switchIfEmpty(Mono.error(new RuntimeException("User not found for email: " + app.getEmail())))
-                .flatMap(user -> getActiveDebts(user)
-                        .flatMap(activeDebts -> {
-                            LoanValidation message = buildLoanValidationMessage(app, appType, user, requestedStatusId, activeDebts);
+                .flatMap(user -> getDebtsInfo(user)
+                        .flatMap(debtsInfo -> {
+                            List<Double> activeDebts = debtsInfo.getT1();
+                            Double totalDebtAmount = debtsInfo.getT2();
+
+                            LoanValidation message = buildLoanValidationMessage(app, appType, user, requestedStatusId, activeDebts, totalDebtAmount);
+
                             return notificationGateway.sendForValidation(message)
                                     .then(Mono.zip(
                                             Mono.just(app),
@@ -159,6 +174,98 @@ public class LoanApplicationUseCase {
                         })
                 );
     }
+
+
+
+    private Mono<List<Double>> getActiveDebts(User user) {
+        return statusRepository.findByName("APROBADO")
+                .flatMapMany(approvedStatus -> loanRepository.findByEmailAndStatusId(user.getEmail(), approvedStatus.getId()))
+                .flatMap(activeLoan ->
+                        applicationTypeRepository.findById(activeLoan.getApplicationTypeId())
+                                .map(type -> {
+                                    BigDecimal annualRatePercent = BigDecimal.valueOf(type.getInterest_rate());
+                                    BigDecimal annualRate = annualRatePercent.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
+                                    BigDecimal monthlyRate = annualRate.divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP);
+
+                                    BigDecimal monthlyPayment = AmortizationUtils.calculateMonthlyPayment(
+                                            activeLoan.getAmount(),
+                                            monthlyRate,
+                                            activeLoan.getTerm()
+                                    );
+
+                                    // --- LOG para inspeccionar cada cuota ---
+                                    System.out.println("💰 LoanId: " + activeLoan.getId()
+                                            + " | Amount: " + activeLoan.getAmount()
+                                            + " | MonthlyRate: " + monthlyRate
+                                            + " | Term: " + activeLoan.getTerm()
+                                            + " | MonthlyPayment: " + monthlyPayment);
+
+                                    return monthlyPayment;
+                                })
+                )
+                .collectList()
+                .map(list -> list.stream()
+                        .map(BigDecimal::doubleValue)
+                        .collect(Collectors.toList())
+                );
+    }
+
+
+    private Mono<Tuple2<List<Double>, Double>> getDebtsInfo(User user) {
+        return statusRepository.findByName("APROBADO")
+                .flatMapMany(approvedStatus ->
+                        loanRepository.findByEmailAndStatusId(user.getEmail(), approvedStatus.getId())
+                )
+                .flatMap(activeLoan ->
+                        applicationTypeRepository.findById(activeLoan.getApplicationTypeId())
+                                .map(type -> {
+                                    BigDecimal annualRate = BigDecimal.valueOf(type.getInterest_rate())
+                                            .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
+                                    BigDecimal monthlyRate = annualRate.divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP);
+                                    BigDecimal monthlyPayment = AmortizationUtils.calculateMonthlyPayment(
+                                            activeLoan.getAmount(),
+                                            monthlyRate,
+                                            activeLoan.getTerm()
+                                    );
+                                    return Tuples.of(monthlyPayment.doubleValue(), activeLoan.getAmount().doubleValue());
+                                })
+                )
+                .collectList()
+                .map(list -> {
+                    List<Double> monthlyPayments = list.stream().map(Tuple2::getT1).toList();
+                    Double totalDebt = list.stream().mapToDouble(Tuple2::getT2).sum();
+                    return Tuples.of(monthlyPayments, totalDebt);
+                });
+    }
+
+
+    private LoanValidation buildLoanValidationMessage(
+            LoanApplication app,
+            ApplicationType appType,
+            User user,
+            Integer requestedStatusId,
+            List<Double> activeDebts,
+            Double totalDebtAmount) {
+
+        System.out.println("💰 Total Deudas Mansual activa: " + activeDebts);
+        System.out.println("💰 Deuda Total: " + totalDebtAmount);
+
+        LoanValidation message = new LoanValidation();
+        message.setLoanId(app.getId().toString());
+        message.setUserName(user.getFirstName());
+        message.setEmail(app.getEmail());
+        message.setAmount(app.getAmount().doubleValue());
+        message.setTerm(app.getTerm());
+        message.setInterestRate(appType.getInterest_rate());
+        message.setBaseSalary(user.getBaseSalary().doubleValue());
+        message.setActiveDebts(activeDebts);
+        message.setTotalDebtAmount(totalDebtAmount);
+        message.setRequestedStatusId(requestedStatusId);
+        message.setLoanTypeId(appType.getId());
+        message.setAutomaticValidation(Boolean.TRUE.equals(appType.isAutomatic_validation()));
+        return message;
+    }
+
 
     private Mono<Tuple3<LoanApplication, Status, ApplicationType>> handleManualValidation(
             LoanApplication app,
@@ -177,47 +284,6 @@ public class LoanApplicationUseCase {
                         )
                 );
     }
-
-    private Mono<List<Double>> getActiveDebts(User user) {
-        return statusRepository.findByName("APROBADO")
-                .flatMapMany(approvedStatus -> loanRepository.findByEmailAndStatusId(user.getEmail(), approvedStatus.getId()))
-                .flatMap(activeLoan -> {
-                    BigDecimal cuota = AmortizationUtils.calculateMonthlyPayment(
-                            activeLoan.getAmount(),
-                            BigDecimal.valueOf(activeLoan.getTerm()),
-                            activeLoan.getTerm()
-                    );
-                    return Mono.just(cuota);
-                })
-                .collectList()
-                .map(list -> list.stream()
-                        .map(BigDecimal::doubleValue)
-                        .collect(Collectors.toList())
-                );
-    }
-
-    private LoanValidation buildLoanValidationMessage(
-            LoanApplication app,
-            ApplicationType appType,
-            User user,
-            Integer requestedStatusId,
-            List<Double> activeDebts) {
-
-        LoanValidation message = new LoanValidation();
-        message.setLoanId(app.getId().toString());
-        message.setUserName(user.getFirstName());
-        message.setEmail(app.getEmail());
-        message.setAmount(app.getAmount().doubleValue());
-        message.setTerm(app.getTerm());
-        message.setInterestRate(appType.getInterest_rate());
-        message.setBaseSalary(user.getBaseSalary().doubleValue());
-        message.setActiveDebts(activeDebts);
-        message.setRequestedStatusId(requestedStatusId);
-        message.setLoanTypeId(appType.getId());
-        message.setAutomaticValidation(Boolean.TRUE.equals(appType.isAutomatic_validation()));
-        return message;
-    }
-
 
     public Mono<Tuple3<LoanApplication, Status, ApplicationType>> updateStatusAndGetDetailsOld(UUID id, Integer statusId) {
 
