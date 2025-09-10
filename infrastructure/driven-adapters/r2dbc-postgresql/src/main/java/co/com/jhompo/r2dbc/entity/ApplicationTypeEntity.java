@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,8 +18,8 @@ public class ApplicationTypeEntity {
     @Id
     private int id;
     private String name;
-    private double minimum_amount;
-    private double maximum_amount;
+    private BigDecimal minimum_amount;
+    private BigDecimal maximum_amount;
     private double interest_rate;
     private boolean automatic_validation;
 }

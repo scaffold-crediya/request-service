@@ -182,7 +182,8 @@ public final class Messages {
         // Éxito
         public static final String OPERATION_SUCCESS = "Operación realizada exitosamente";
         public static final String DATA_RETRIEVED = "Datos obtenidos exitosamente";
-        public static final String CACHE_CLEARED = "Caché limpiado exitosamente";
+        public static final String SQS_PROCESS = "Procesando mensaje de SQS: {}";
+
 
         // Errores
         public static final String OPERATION_ERROR= "Error, operación no realizada exitosamente";
@@ -199,6 +200,8 @@ public final class Messages {
         public static final String VALIDATION_ERROR = "Error de validación";
         public static final String SERIALIZATION_ERROR = "Error de serialización";
         public static final String DESERIALIZATION_ERROR = "Error de deserialización";
+        public static final String CONTENT_ERROR = "Contenido del mensaje que falló: {}";
+        public static final String SQS_ERROR = "Error inesperado procesando mensaje SQS: {}";
 
 
         public static final String EXTERNAL_SERVICE_COMMUNICATION_ERROR = "Ocurrió un error al comunicarse con un servicio externo";

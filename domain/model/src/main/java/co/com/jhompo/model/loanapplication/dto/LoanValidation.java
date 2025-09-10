@@ -18,6 +18,7 @@ public class LoanValidation {
     private Double interestRate;
     private Double baseSalary;
     private List<Double> activeDebts;
+    private Double totalDebtAmount;
     private Integer requestedStatusId;
     private Integer loanTypeId;
     private Boolean automaticValidation;
