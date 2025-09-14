@@ -16,12 +16,12 @@ import java.util.List;
 public class JwtProvider {
 
     @Value("${security.jwt.secret-key}")
-    private String secretKey;
+    String secretKey;
 
     public JwtProvider() {
     }
 
-    private SecretKey getSigningKey() {
+    SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(Base64.getDecoder().decode(secretKey));
     }
 

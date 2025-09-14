@@ -1,8 +1,7 @@
 package co.com.jhompo.usecase.loanapplication;
 
-import co.com.jhompo.model.applicationtype.ApplicationType;
-import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
-import co.com.jhompo.model.gateways.EmailGateway;
+import co.com.jhompo.model.loantype.LoanType;
+import co.com.jhompo.model.loantype.gateways.LoanTypeRepository;
 import co.com.jhompo.model.gateways.NotificationGateway;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.dto.LoanValidation;
@@ -34,11 +33,10 @@ public class LoanApplicationUseCase {
 
 
     private final LoanApplicationRepository loanRepository;
-    private final ApplicationTypeRepository applicationTypeRepository;
+    private final LoanTypeRepository loanTypeRepository;
     private final StatusRepository statusRepository;
 
     private final UserExistenceGateway verifyEmailExists;
-    private final EmailGateway emailGateway;
     private final NotificationGateway notificationGateway;
 
 
@@ -48,7 +46,7 @@ public class LoanApplicationUseCase {
                     if (Boolean.FALSE.equals(userExists)) {
                         return Mono.error(new IllegalArgumentException(LOAN_APPLICATION.EMAIL_NOT_FOUND));
                     }
-                    return applicationTypeRepository.findById(loanApplication.getApplicationTypeId());
+                    return loanTypeRepository.findById(loanApplication.getApplicationTypeId());
                 })
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(LOAN_APPLICATION.NOT_FOUND)))
                 .flatMap(applicationType -> {
@@ -135,10 +133,10 @@ public class LoanApplicationUseCase {
 
 
 
-    public Mono<Tuple3<LoanApplication, Status, ApplicationType>> updateStatusAndGetDetails(UUID applicationId, Integer statusId) {
+    public Mono<Tuple3<LoanApplication, Status, LoanType>> updateStatusAndGetDetails(UUID applicationId, Integer statusId) {
         return loanRepository.findById(applicationId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Loan application not found: " + applicationId)))
-                .flatMap(app -> applicationTypeRepository.findById(app.getApplicationTypeId())
+                .flatMap(app -> loanTypeRepository.findById(app.getApplicationTypeId())
                         .flatMap(appType -> {
                             boolean automaticValidation = Boolean.TRUE.equals(appType.isAutomatic_validation());
                             if (automaticValidation) {
@@ -150,9 +148,9 @@ public class LoanApplicationUseCase {
                 );
     }
 
-    private Mono<Tuple3<LoanApplication, Status, ApplicationType>> handleAutomaticValidation(
+    public Mono<Tuple3<LoanApplication, Status, LoanType>> handleAutomaticValidation(
             LoanApplication app,
-            ApplicationType appType,
+            LoanType appType,
             Integer requestedStatusId) {
 
         return verifyEmailExists.findUserDetailsByEmails(List.of(app.getEmail()))
@@ -177,11 +175,11 @@ public class LoanApplicationUseCase {
 
 
 
-    private Mono<List<Double>> getActiveDebts(User user) {
+    public Mono<List<Double>> getActiveDebts(User user) {
         return statusRepository.findByName("APROBADO")
                 .flatMapMany(approvedStatus -> loanRepository.findByEmailAndStatusId(user.getEmail(), approvedStatus.getId()))
                 .flatMap(activeLoan ->
-                        applicationTypeRepository.findById(activeLoan.getApplicationTypeId())
+                        loanTypeRepository.findById(activeLoan.getApplicationTypeId())
                                 .map(type -> {
                                     BigDecimal annualRatePercent = BigDecimal.valueOf(type.getInterest_rate());
                                     BigDecimal annualRate = annualRatePercent.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
@@ -211,13 +209,13 @@ public class LoanApplicationUseCase {
     }
 
 
-    private Mono<Tuple2<List<Double>, Double>> getDebtsInfo(User user) {
+    public Mono<Tuple2<List<Double>, Double>> getDebtsInfo(User user) {
         return statusRepository.findByName("APROBADO")
                 .flatMapMany(approvedStatus ->
                         loanRepository.findByEmailAndStatusId(user.getEmail(), approvedStatus.getId())
                 )
                 .flatMap(activeLoan ->
-                        applicationTypeRepository.findById(activeLoan.getApplicationTypeId())
+                        loanTypeRepository.findById(activeLoan.getApplicationTypeId())
                                 .map(type -> {
                                     BigDecimal annualRate = BigDecimal.valueOf(type.getInterest_rate())
                                             .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
@@ -239,9 +237,9 @@ public class LoanApplicationUseCase {
     }
 
 
-    private LoanValidation buildLoanValidationMessage(
+    public LoanValidation buildLoanValidationMessage(
             LoanApplication app,
-            ApplicationType appType,
+            LoanType appType,
             User user,
             Integer requestedStatusId,
             List<Double> activeDebts,
@@ -267,9 +265,9 @@ public class LoanApplicationUseCase {
     }
 
 
-    private Mono<Tuple3<LoanApplication, Status, ApplicationType>> handleManualValidation(
+    public Mono<Tuple3<LoanApplication, Status, LoanType>> handleManualValidation(
             LoanApplication app,
-            ApplicationType appType,
+            LoanType appType,
             Integer statusId) {
 
         app.setStatusId(statusId);
@@ -285,7 +283,7 @@ public class LoanApplicationUseCase {
                 );
     }
 
-    public Mono<Tuple3<LoanApplication, Status, ApplicationType>> updateStatusAndGetDetailsOld(UUID id, Integer statusId) {
+    public Mono<Tuple3<LoanApplication, Status, LoanType>> updateStatusAndGetDetailsOld(UUID id, Integer statusId) {
 
         //Actualizar y guardar el préstamo
         Mono<LoanApplication> updatedLoanMono = loanRepository.findById(id)
@@ -296,7 +294,7 @@ public class LoanApplicationUseCase {
 
         //Obtener los detalles de forma paralela
         Mono<Status> statusMono = updatedLoanMono.flatMap(loan -> statusRepository.findById(loan.getStatusId()));
-        Mono<ApplicationType> applicationTypeMono = updatedLoanMono.flatMap(loan -> applicationTypeRepository.findById(loan.getApplicationTypeId()));
+        Mono<LoanType> applicationTypeMono = updatedLoanMono.flatMap(loan -> loanTypeRepository.findById(loan.getApplicationTypeId()));
 
         //Combinar todos los Monos en una sola tupla
         return Mono.zip(updatedLoanMono, statusMono, applicationTypeMono)

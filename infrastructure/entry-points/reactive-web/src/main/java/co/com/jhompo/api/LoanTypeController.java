@@ -2,7 +2,7 @@ package co.com.jhompo.api;
 
 import co.com.jhompo.api.dtos.ApplicationTypeDTO;
 import co.com.jhompo.api.mapper.ApplicationTypeMapper;
-import co.com.jhompo.usecase.applicationtype.ApplicationTypeUseCase;
+import co.com.jhompo.usecase.loantype.LoanTypeUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +20,9 @@ import static co.com.jhompo.util.Messages.*;
 @RequestMapping("/api/v1/loantype")
 @RequiredArgsConstructor
 @Tag(name = APPLICATION_TYPE.TITLE, description = APPLICATION_TYPE.DESCRIPTION)
-public class ApplicationTypeController {
+public class LoanTypeController {
 
-    private final ApplicationTypeUseCase service;
+    private final LoanTypeUseCase service;
     private final ApplicationTypeMapper mapper;
 
     @Operation(summary = APPLICATION_TYPE.DESCRIPTION_CREATE)
@@ -41,7 +41,7 @@ public class ApplicationTypeController {
     public Flux<ApplicationTypeDTO> getAll() {
         log.info(APPLICATION_TYPE.DESCRIPTION_GET_ALL);
 
-        return service.getAllStatuses()
+        return service.getAllType()
                 .map(mapper::toDto);
     }
 }
