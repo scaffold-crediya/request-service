@@ -1,8 +1,8 @@
-package co.com.jhompo.r2dbc.repositories.application_type;
+package co.com.jhompo.r2dbc.repositories.loan_type;
 
+import co.com.jhompo.model.loantype.LoanType;
 import co.com.jhompo.util.Messages.*;
-import co.com.jhompo.model.applicationtype.ApplicationType;
-import co.com.jhompo.model.applicationtype.gateways.ApplicationTypeRepository;
+import co.com.jhompo.model.loantype.gateways.LoanTypeRepository;
 import co.com.jhompo.r2dbc.entity.ApplicationTypeEntity;
 import co.com.jhompo.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
@@ -16,35 +16,35 @@ import reactor.core.publisher.Mono;
 
 @Repository
 
-public class ApplicationTypeAdapter
-        extends ReactiveAdapterOperations<ApplicationType, ApplicationTypeEntity, Integer, ApplicationTypeReactiveRepository>
-        implements ApplicationTypeRepository {
+public class LoanTypeAdapter
+        extends ReactiveAdapterOperations<LoanType, ApplicationTypeEntity, Integer, LoanTypeReactiveRepository>
+        implements LoanTypeRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(ApplicationTypeAdapter.class);
+    private static final Logger log = LoggerFactory.getLogger(LoanTypeAdapter.class);
     private final TransactionalOperator transactionalOperator;
 
-    public ApplicationTypeAdapter(ApplicationTypeReactiveRepository repository, ObjectMapper mapper, TransactionalOperator transactionalOperator) {
-        super(repository, mapper, entity -> mapper.map(entity, ApplicationType.class));
+    public LoanTypeAdapter(LoanTypeReactiveRepository repository, ObjectMapper mapper, TransactionalOperator transactionalOperator) {
+        super(repository, mapper, entity -> mapper.map(entity, LoanType.class));
         this.transactionalOperator = transactionalOperator;
     }
 
     @Override
-    public Mono<ApplicationType> save(ApplicationType applicationType) {
-        log.info("Iniciando guardado en BD para el tipo de aplicación: {}", applicationType.getName());
+    public Mono<LoanType> save(LoanType loanType) {
+        log.info("Iniciando guardado en BD para el tipo de aplicación: {}", loanType.getName());
         return transactionalOperator.transactional(
-                super.save(applicationType)
+                super.save(loanType)
                         .doOnSuccess(saved -> log.info(SYSTEM.OPERATION_SUCCESS, saved.getName()))
-                        .doOnError(e -> log.error(SYSTEM.OPERATION_ERROR, applicationType.getName(), e))
+                        .doOnError(e -> log.error(SYSTEM.OPERATION_ERROR, loanType.getName(), e))
         );
     }
 
     @Override
-    public Mono<ApplicationType> findById(Integer id) {
+    public Mono<LoanType> findById(Integer id) {
         return super.findById(id);
     }
 
     @Override
-    public Flux<ApplicationType> findAll() {
+    public Flux<LoanType> findAll() {
         return super.findAll();
     }
 

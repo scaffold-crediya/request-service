@@ -2,13 +2,13 @@ package co.com.jhompo.r2dbc.gateways.aws;
 
 import co.com.jhompo.model.gateways.NotificationGateway;
 import co.com.jhompo.model.loanapplication.dto.LoanValidation;
+import co.com.jhompo.util.Messages.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
@@ -32,7 +32,7 @@ public class SQSNotificationGateway implements NotificationGateway {
     public Mono<Void> sendNotification(String loanId, String status, String email) {
         String messageBody = String.format("{\"solicitudId\":\"%s\", \"estado\":\"%s\", \"email_destino\":\"%s\"}", loanId, status, email);
 
-        log.info("Sending message to SQS: {}", messageBody);
+        log.info(SYSTEM.SQS_PROCESS, messageBody);
 
         SendMessageRequest request = SendMessageRequest.builder()
                 .queueUrl(approvalsQueueUrl)
@@ -41,8 +41,8 @@ public class SQSNotificationGateway implements NotificationGateway {
 
 
         return Mono.fromFuture(sqsAsyncClient.sendMessage(request))
-                .doOnSuccess(response -> log.info("*****Message sent successfully. MessageId: {}", response.messageId()))
-                .doOnError(error -> log.error("*****Failed to send message to SQS: {}", error.getMessage()))
+                .doOnSuccess(response -> log.info(SYSTEM.OPERATION_SUCCESS, response.messageId()))
+                .doOnError(error -> log.error(SYSTEM.SQS_ERROR, error.getMessage()))
                 .then();
     }
 
@@ -56,7 +56,7 @@ public class SQSNotificationGateway implements NotificationGateway {
                     .messageBody(payload)
                     .build();
 
-            return Mono.fromFuture(() -> sqsAsyncClient.sendMessage(req)).then();
+            return Mono.fromFuture(sqsAsyncClient.sendMessage(req)).then();
         } catch (Exception e) {
             return Mono.error(e);
         }

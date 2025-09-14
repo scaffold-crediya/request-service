@@ -2,8 +2,8 @@ package co.com.jhompo.api;
 
 import co.com.jhompo.api.dtos.ApplicationTypeDTO;
 import co.com.jhompo.api.mapper.ApplicationTypeMapper;
-import co.com.jhompo.model.applicationtype.ApplicationType;
-import co.com.jhompo.usecase.applicationtype.ApplicationTypeUseCase;
+import co.com.jhompo.model.loantype.LoanType;
+import co.com.jhompo.usecase.loantype.LoanTypeUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,27 +17,29 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ApplicationTypeControllerTest {
+class LoanTypeControllerTest {
 
     @Mock
-    private ApplicationTypeUseCase service;
+    private LoanTypeUseCase service;
 
     @Mock
     private ApplicationTypeMapper mapper;
 
     @InjectMocks
-    private ApplicationTypeController applicationTypeController;
+    private LoanTypeController loanTypeController;
 
     private ApplicationTypeDTO testApplicationTypeDTO;
-    private ApplicationType testApplicationType;
+    private LoanType testLoanType;
     private final int testId = 1;
     private final String testName = "Personal Loan";
-    private final double testMinimumAmount = 1000.0;
-    private final double testMaximumAmount = 50000.0;
+    private final BigDecimal testMinimumAmount = BigDecimal.valueOf(1000.0);
+    private final BigDecimal testMaximumAmount = new BigDecimal("50000.0");
     private final double testInterestRate = 15.5;
     private final boolean testAutomaticValidation = true;
 
@@ -46,7 +48,7 @@ class ApplicationTypeControllerTest {
         testApplicationTypeDTO = new ApplicationTypeDTO(testId, testName, testMinimumAmount,
                 testMaximumAmount, testInterestRate, testAutomaticValidation);
 
-        testApplicationType = ApplicationType.builder()
+        testLoanType = LoanType.builder()
                 .id(testId)
                 .name(testName)
                 .minimum_amount(testMinimumAmount)
@@ -60,7 +62,7 @@ class ApplicationTypeControllerTest {
     @DisplayName("Debería crear tipo de aplicación exitosamente")
     void shouldCreateApplicationTypeSuccessfully() {
         // Given
-        ApplicationType createdApplicationType = ApplicationType.builder()
+        LoanType createdLoanType = LoanType.builder()
                 .id(5) // ID generado por DB
                 .name(testName)
                 .minimum_amount(testMinimumAmount)
@@ -72,12 +74,12 @@ class ApplicationTypeControllerTest {
         ApplicationTypeDTO createdApplicationTypeDTO = new ApplicationTypeDTO(5, testName,
                 testMinimumAmount, testMaximumAmount, testInterestRate, testAutomaticValidation);
 
-        when(mapper.toEntity(testApplicationTypeDTO)).thenReturn(testApplicationType);
-        when(service.create(testApplicationType)).thenReturn(Mono.just(createdApplicationType));
-        when(mapper.toDto(createdApplicationType)).thenReturn(createdApplicationTypeDTO);
+        when(mapper.toEntity(testApplicationTypeDTO)).thenReturn(testLoanType);
+        when(service.create(testLoanType)).thenReturn(Mono.just(createdLoanType));
+        when(mapper.toDto(createdLoanType)).thenReturn(createdApplicationTypeDTO);
 
         // When & Then
-        StepVerifier.create(applicationTypeController.createApplicationType(testApplicationTypeDTO))
+        StepVerifier.create(loanTypeController.createApplicationType(testApplicationTypeDTO))
                 .expectNext(new ResponseEntity<>(createdApplicationTypeDTO, HttpStatus.CREATED))
                 .verifyComplete();
     }
@@ -86,24 +88,24 @@ class ApplicationTypeControllerTest {
     @DisplayName("Debería obtener todos los tipos de aplicación exitosamente")
     void shouldGetAllApplicationTypesSuccessfully() {
         // Given
-        ApplicationType secondApplicationType = ApplicationType.builder()
+        LoanType secondLoanType = LoanType.builder()
                 .id(2)
                 .name("Business Loan")
-                .minimum_amount(5000.0)
-                .maximum_amount(200000.0)
+                .minimum_amount(BigDecimal.valueOf(5000.0))
+                .maximum_amount(BigDecimal.valueOf(200000.0))
                 .interest_rate(12.0)
                 .automatic_validation(false)
                 .build();
 
         ApplicationTypeDTO secondApplicationTypeDTO = new ApplicationTypeDTO(2, "Business Loan",
-                5000.0, 200000.0, 12.0, false);
+                BigDecimal.valueOf(5000.0), BigDecimal.valueOf(200000.0), 12.0, false);
 
-        when(service.getAllStatuses()).thenReturn(Flux.just(testApplicationType, secondApplicationType));
-        when(mapper.toDto(testApplicationType)).thenReturn(testApplicationTypeDTO);
-        when(mapper.toDto(secondApplicationType)).thenReturn(secondApplicationTypeDTO);
+        when(service.getAllType()).thenReturn(Flux.just(testLoanType, secondLoanType));
+        when(mapper.toDto(testLoanType)).thenReturn(testApplicationTypeDTO);
+        when(mapper.toDto(secondLoanType)).thenReturn(secondApplicationTypeDTO);
 
         // When & Then
-        StepVerifier.create(applicationTypeController.getAll())
+        StepVerifier.create(loanTypeController.getAll())
                 .expectNext(testApplicationTypeDTO)
                 .expectNext(secondApplicationTypeDTO)
                 .verifyComplete();
@@ -113,10 +115,10 @@ class ApplicationTypeControllerTest {
     @DisplayName("Debería retornar lista vacía cuando no hay tipos de aplicación")
     void shouldReturnEmptyWhenNoApplicationTypes() {
         // Given
-        when(service.getAllStatuses()).thenReturn(Flux.empty());
+        when(service.getAllType()).thenReturn(Flux.empty());
 
         // When & Then
-        StepVerifier.create(applicationTypeController.getAll())
+        StepVerifier.create(loanTypeController.getAll())
                 .verifyComplete();
     }
 
@@ -125,11 +127,11 @@ class ApplicationTypeControllerTest {
     void shouldHandleUseCaseErrorOnCreate() {
         // Given
         RuntimeException expectedError = new RuntimeException("Database error");
-        when(mapper.toEntity(testApplicationTypeDTO)).thenReturn(testApplicationType);
-        when(service.create(any(ApplicationType.class))).thenReturn(Mono.error(expectedError));
+        when(mapper.toEntity(testApplicationTypeDTO)).thenReturn(testLoanType);
+        when(service.create(any(LoanType.class))).thenReturn(Mono.error(expectedError));
 
         // When & Then
-        StepVerifier.create(applicationTypeController.createApplicationType(testApplicationTypeDTO))
+        StepVerifier.create(loanTypeController.createApplicationType(testApplicationTypeDTO))
                 .expectError(RuntimeException.class)
                 .verify();
     }
@@ -139,10 +141,10 @@ class ApplicationTypeControllerTest {
     void shouldHandleUseCaseErrorOnGetAll() {
         // Given
         RuntimeException expectedError = new RuntimeException("Database connection failed");
-        when(service.getAllStatuses()).thenReturn(Flux.error(expectedError));
+        when(service.getAllType()).thenReturn(Flux.error(expectedError));
 
         // When & Then
-        StepVerifier.create(applicationTypeController.getAll())
+        StepVerifier.create(loanTypeController.getAll())
                 .expectError(RuntimeException.class)
                 .verify();
     }
@@ -155,7 +157,7 @@ class ApplicationTypeControllerTest {
         when(mapper.toEntity(testApplicationTypeDTO)).thenThrow(mapperError);
 
         // When & Then
-        StepVerifier.create(applicationTypeController.createApplicationType(testApplicationTypeDTO))
+        StepVerifier.create(loanTypeController.createApplicationType(testApplicationTypeDTO))
                 .expectError(RuntimeException.class)
                 .verify();
     }
@@ -165,11 +167,11 @@ class ApplicationTypeControllerTest {
     void shouldHandleMapperErrorOnGetAll() {
         // Given
         RuntimeException mapperError = new RuntimeException("Mapping error");
-        when(service.getAllStatuses()).thenReturn(Flux.just(testApplicationType));
-        when(mapper.toDto(testApplicationType)).thenThrow(mapperError);
+        when(service.getAllType()).thenReturn(Flux.just(testLoanType));
+        when(mapper.toDto(testLoanType)).thenThrow(mapperError);
 
         // When & Then
-        StepVerifier.create(applicationTypeController.getAll())
+        StepVerifier.create(loanTypeController.getAll())
                 .expectError(RuntimeException.class)
                 .verify();
     }
@@ -180,7 +182,7 @@ class ApplicationTypeControllerTest {
         // Given
         ApplicationTypeDTO createdApplicationTypeDTO = new ApplicationTypeDTO(3, testName,
                 testMinimumAmount, testMaximumAmount, testInterestRate, testAutomaticValidation);
-        ApplicationType createdApplicationType = ApplicationType.builder()
+        LoanType createdLoanType = LoanType.builder()
                 .id(3)
                 .name(testName)
                 .minimum_amount(testMinimumAmount)
@@ -189,12 +191,12 @@ class ApplicationTypeControllerTest {
                 .automatic_validation(testAutomaticValidation)
                 .build();
 
-        when(mapper.toEntity(testApplicationTypeDTO)).thenReturn(testApplicationType);
-        when(service.create(testApplicationType)).thenReturn(Mono.just(createdApplicationType));
-        when(mapper.toDto(createdApplicationType)).thenReturn(createdApplicationTypeDTO);
+        when(mapper.toEntity(testApplicationTypeDTO)).thenReturn(testLoanType);
+        when(service.create(testLoanType)).thenReturn(Mono.just(createdLoanType));
+        when(mapper.toDto(createdLoanType)).thenReturn(createdApplicationTypeDTO);
 
         // When & Then
-        StepVerifier.create(applicationTypeController.createApplicationType(testApplicationTypeDTO))
+        StepVerifier.create(loanTypeController.createApplicationType(testApplicationTypeDTO))
                 .expectNextMatches(responseEntity ->
                         responseEntity.getStatusCode() == HttpStatus.CREATED &&
                                 responseEntity.getBody().equals(createdApplicationTypeDTO)
@@ -206,24 +208,24 @@ class ApplicationTypeControllerTest {
     @DisplayName("Debería manejar múltiples tipos de aplicación en getAll")
     void shouldHandleMultipleApplicationTypesInGetAll() {
         // Given
-        ApplicationType type1 = ApplicationType.builder().id(1).name("Personal")
-                .minimum_amount(1000.0).maximum_amount(50000.0).interest_rate(15.5).automatic_validation(true).build();
-        ApplicationType type2 = ApplicationType.builder().id(2).name("Business")
-                .minimum_amount(5000.0).maximum_amount(200000.0).interest_rate(12.0).automatic_validation(false).build();
-        ApplicationType type3 = ApplicationType.builder().id(3).name("Mortgage")
-                .minimum_amount(20000.0).maximum_amount(500000.0).interest_rate(8.5).automatic_validation(false).build();
+        LoanType type1 = LoanType.builder().id(1).name("Personal")
+                .minimum_amount(BigDecimal.valueOf(1000.0)).maximum_amount(BigDecimal.valueOf(50000.0)).interest_rate(15.5).automatic_validation(true).build();
+        LoanType type2 = LoanType.builder().id(2).name("Business")
+                .minimum_amount(BigDecimal.valueOf(5000.0)).maximum_amount(BigDecimal.valueOf(200000.0)).interest_rate(12.0).automatic_validation(false).build();
+        LoanType type3 = LoanType.builder().id(3).name("Mortgage")
+                .minimum_amount(BigDecimal.valueOf(20000.0)).maximum_amount(BigDecimal.valueOf(500000.0)).interest_rate(8.5).automatic_validation(false).build();
 
-        ApplicationTypeDTO dto1 = new ApplicationTypeDTO(1, "Personal", 1000.0, 50000.0, 15.5, true);
-        ApplicationTypeDTO dto2 = new ApplicationTypeDTO(2, "Business", 5000.0, 200000.0, 12.0, false);
-        ApplicationTypeDTO dto3 = new ApplicationTypeDTO(3, "Mortgage", 20000.0, 500000.0, 8.5, false);
+        ApplicationTypeDTO dto1 = new ApplicationTypeDTO(1, "Personal", BigDecimal.valueOf(1000.0), BigDecimal.valueOf(50000.0), 15.5, true);
+        ApplicationTypeDTO dto2 = new ApplicationTypeDTO(2, "Business", BigDecimal.valueOf(5000.0), BigDecimal.valueOf(200000.0), 12.0, false);
+        ApplicationTypeDTO dto3 = new ApplicationTypeDTO(3, "Mortgage", BigDecimal.valueOf(20000.0), BigDecimal.valueOf(500000.0), 8.5, false);
 
-        when(service.getAllStatuses()).thenReturn(Flux.just(type1, type2, type3));
+        when(service.getAllType()).thenReturn(Flux.just(type1, type2, type3));
         when(mapper.toDto(type1)).thenReturn(dto1);
         when(mapper.toDto(type2)).thenReturn(dto2);
         when(mapper.toDto(type3)).thenReturn(dto3);
 
         // When & Then
-        StepVerifier.create(applicationTypeController.getAll())
+        StepVerifier.create(loanTypeController.getAll())
                 .expectNext(dto1)
                 .expectNext(dto2)
                 .expectNext(dto3)
