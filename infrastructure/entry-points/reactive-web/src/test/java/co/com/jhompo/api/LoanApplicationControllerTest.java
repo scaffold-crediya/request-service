@@ -4,6 +4,8 @@ import co.com.jhompo.api.dtos.LoanApplicationDTO;
 import co.com.jhompo.api.mapper.LoanApplicationMapper;
 import co.com.jhompo.model.loanapplication.LoanApplication;
 import co.com.jhompo.model.loanapplication.dto.LoanApplicationSummaryDTO;
+import co.com.jhompo.model.loantype.LoanType;
+import co.com.jhompo.model.status.Status;
 import co.com.jhompo.usecase.loanapplication.LoanApplicationUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,24 +13,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextImpl;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuple3;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +42,6 @@ class LoanApplicationControllerTest {
 
     private LoanApplicationDTO testLoanApplicationDTO;
     private LoanApplication testLoanApplication;
-    private LoanApplication testUpdateLoanApplication;
     private LoanApplicationSummaryDTO testSummaryDTO;
     private final String testEmail = "test@example.com";
     private final UUID testId = UUID.randomUUID();
@@ -69,15 +65,6 @@ class LoanApplicationControllerTest {
                 .applicationTypeId(1)
                 .build();
 
-        testUpdateLoanApplication = LoanApplication.builder()
-                .id(testId)
-                .email(testEmail)
-                .amount(BigDecimal.valueOf(15000))
-                .term(24)
-                .statusId(2)
-                .applicationTypeId(1)
-                .build();
-
         testSummaryDTO = LoanApplicationSummaryDTO.builder()
                 .email(testEmail)
                 .amount(BigDecimal.valueOf(10000))
@@ -85,115 +72,141 @@ class LoanApplicationControllerTest {
                 .build();
     }
 
-
-
     @Test
-    @DisplayName("Debería retornar vacío cuando no encuentra solicitud por ID")
-    void shouldReturnEmptyWhenNotFoundById() {
-        // Given
-        UUID nonExistentId = UUID.randomUUID();
-        when(loanApplicationUseCase.getById(nonExistentId)).thenReturn(Mono.empty());
+    @DisplayName("Deberia obtener todas las solicitudes exitosamente")
+    void shouldGetAllApplications() {
+        when(loanApplicationUseCase.getAll()).thenReturn(Flux.just(testLoanApplication));
+        when(mapper.toDto(any(LoanApplication.class))).thenReturn(testLoanApplicationDTO);
 
-        // When & Then
-        StepVerifier.create(loanApplicationController.getById(nonExistentId))
-                .verifyComplete();
-    }
-
-
-    @Test
-    @DisplayName("Debería eliminar solicitud exitosamente")
-    void shouldDeleteLoanApplicationSuccessfully() {
-        // Given
-        when(loanApplicationUseCase.delete(testId)).thenReturn(Mono.empty());
-
-        // When & Then
-        StepVerifier.create(loanApplicationController.delete(testId))
+        StepVerifier.create(loanApplicationController.getAll())
+                .expectNext(testLoanApplicationDTO)
                 .verifyComplete();
     }
 
     @Test
-    @DisplayName("Debería obtener resúmenes de solicitudes por estado exitosamente")
-    void shouldGetSummariesByStatusSuccessfully() {
-        // Given
-        String statusName = "PENDING";
-        int page = 0;
-        int size = 10;
+    @DisplayName("Deberia crear solicitud exitosamente cuando email coincide con usuario autenticado")
+    void shouldCreateApplicationSuccessfully() {
+        when(mapper.toEntityForCreate(testLoanApplicationDTO)).thenReturn(testLoanApplication);
+        when(loanApplicationUseCase.create(testLoanApplication)).thenReturn(Mono.just(testLoanApplication));
+        when(mapper.toDto(testLoanApplication)).thenReturn(testLoanApplicationDTO);
 
-        LoanApplicationSummaryDTO secondSummary = LoanApplicationSummaryDTO.builder()
-                .email("another@example.com")
-                .amount(BigDecimal.valueOf(20000))
-                .statusName("PENDING")
+        Mono<LoanApplicationDTO> result = loanApplicationController.create(testLoanApplicationDTO)
+                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(
+                        new TestingAuthenticationToken(testEmail, null)
+                ));
+
+        StepVerifier.create(result)
+                .expectNext(testLoanApplicationDTO)
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Deberia fallar al crear solicitud cuando email no coincide con usuario autenticado")
+    void shouldFailCreateWhenEmailDoesNotMatchAuthenticatedUser() {
+        LoanApplicationDTO dtoWithDifferentEmail = LoanApplicationDTO.builder()
+                .email("other@example.com")
+                .amount(BigDecimal.valueOf(10000))
+                .term(12)
+                .statusId(1)
+                .applicationTypeId(1)
                 .build();
 
-        when(loanApplicationUseCase.findByStatusName(statusName, page, size))
-                .thenReturn(Flux.just(testSummaryDTO, secondSummary));
+        Mono<LoanApplicationDTO> result = loanApplicationController.create(dtoWithDifferentEmail)
+                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(
+                        new TestingAuthenticationToken(testEmail, null)
+                ));
 
-        // When & Then
-        StepVerifier.create(loanApplicationController.getSummariesByStatus(statusName, page, size))
-                .expectNext(testSummaryDTO)
-                .expectNext(secondSummary)
+        StepVerifier.create(result)
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Deberia actualizar solicitud exitosamente")
+    void shouldUpdateApplicationSuccessfully() {
+        when(loanApplicationUseCase.update(any(LoanApplication.class))).thenReturn(Mono.just(testLoanApplication));
+        when(mapper.toDto(testLoanApplication)).thenReturn(testLoanApplicationDTO);
+
+        StepVerifier.create(loanApplicationController.update(testId, testLoanApplicationDTO))
+                .expectNext(testLoanApplicationDTO)
                 .verifyComplete();
     }
 
     @Test
-    @DisplayName("Debería obtener resúmenes vacíos cuando no hay solicitudes con el estado especificado")
-    void shouldReturnEmptyWhenNoApplicationsFoundByStatus() {
-        // Given
-        String statusName = "NONEXISTENT";
-        int page = 0;
-        int size = 10;
+    @DisplayName("Deberia actualizar estado de solicitud exitosamente")
+    void shouldUpdateStatusSuccessfully() {
+        Tuple3<LoanApplication, Status, LoanType> tuple =
+                Tuples.of(testLoanApplication,
+                        Status.builder().id(1).name("APPROVED").build(),
+                        LoanType.builder().id(1).name("Personal Loan").build());
 
-        when(loanApplicationUseCase.findByStatusName(statusName, page, size))
-                .thenReturn(Flux.empty());
+        when(loanApplicationUseCase.updateStatusAndGetDetails(testId, 1)).thenReturn(Mono.just(tuple));
 
-        // When & Then
-        StepVerifier.create(loanApplicationController.getSummariesByStatus(statusName, page, size))
+        StepVerifier.create(loanApplicationController.updateStatus(testId, 1))
+                .expectNextMatches(response -> response.getStatusName().equals("APPROVED"))
                 .verifyComplete();
     }
 
+    @Test
+    @DisplayName("Deberia obtener solicitud por ID exitosamente")
+    void shouldGetByIdSuccessfully() {
+        when(loanApplicationUseCase.getById(testId)).thenReturn(Mono.just(testLoanApplication));
+        when(mapper.toDto(testLoanApplication)).thenReturn(testLoanApplicationDTO);
 
+        StepVerifier.create(loanApplicationController.getById(testId))
+                .expectNext(testLoanApplicationDTO)
+                .verifyComplete();
+    }
 
     @Test
-    @DisplayName("Debería manejar error del caso de uso en consulta por ID")
-    void shouldHandleUseCaseErrorOnFindById() {
-        // Given
-        RuntimeException expectedError = new RuntimeException("Database connection failed");
-        when(loanApplicationUseCase.getById(testId)).thenReturn(Mono.error(expectedError));
+    @DisplayName("Deberia manejar error cuando no se encuentra solicitud por ID")
+    void shouldHandleErrorOnGetById() {
+        when(loanApplicationUseCase.getById(testId)).thenReturn(Mono.error(new RuntimeException("Not found")));
 
-        // When & Then
         StepVerifier.create(loanApplicationController.getById(testId))
                 .expectError(RuntimeException.class)
                 .verify();
     }
 
+    @Test
+    @DisplayName("Deberia eliminar solicitud exitosamente")
+    void shouldDeleteSuccessfully() {
+        when(loanApplicationUseCase.delete(testId)).thenReturn(Mono.empty());
 
+        StepVerifier.create(loanApplicationController.delete(testId))
+                .verifyComplete();
+    }
 
     @Test
-    @DisplayName("Debería manejar error del caso de uso en eliminación")
-    void shouldHandleUseCaseErrorOnDelete() {
-        // Given
-        RuntimeException expectedError = new RuntimeException("Delete failed");
-        when(loanApplicationUseCase.delete(testId)).thenReturn(Mono.error(expectedError));
+    @DisplayName("Deberia manejar error al eliminar solicitud")
+    void shouldHandleErrorOnDelete() {
+        when(loanApplicationUseCase.delete(testId)).thenReturn(Mono.error(new RuntimeException("Delete failed")));
 
-        // When & Then
         StepVerifier.create(loanApplicationController.delete(testId))
                 .expectError(RuntimeException.class)
                 .verify();
     }
 
     @Test
-    @DisplayName("Debería usar parámetros por defecto en getSummariesByStatus")
-    void shouldUseDefaultParametersInGetSummariesByStatus() {
-        // Given
-        String statusName = "APPROVED";
-        // Parámetros por defecto: page=0, size=10
-
-        when(loanApplicationUseCase.findByStatusName(statusName, 0, 10))
+    @DisplayName("Deberia obtener resumenes por estado exitosamente")
+    void shouldGetSummariesByStatusSuccessfully() {
+        when(loanApplicationUseCase.findByStatusName("PENDING", 0, 10))
                 .thenReturn(Flux.just(testSummaryDTO));
 
-        // When & Then
-        StepVerifier.create(loanApplicationController.getSummariesByStatus(statusName, 0, 10))
+        StepVerifier.create(loanApplicationController.getSummariesByStatus("PENDING", 0, 10))
                 .expectNext(testSummaryDTO)
                 .verifyComplete();
     }
+
+    @Test
+    @DisplayName("Deberia manejar error al obtener resumenes por estado")
+    void shouldHandleErrorOnGetSummariesByStatus() {
+        when(loanApplicationUseCase.findByStatusName("PENDING", 0, 10))
+                .thenReturn(Flux.error(new RuntimeException("Error retrieving summaries")));
+
+        StepVerifier.create(loanApplicationController.getSummariesByStatus("PENDING", 0, 10))
+                .expectError(RuntimeException.class)
+                .verify();
+    }
+
 }
