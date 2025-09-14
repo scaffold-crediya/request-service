@@ -71,8 +71,60 @@ subprojects {
         jvmArgs = ["-XX:+AllowRedefinitionToAddDeleteMethods"]
     }
 
+
     jacocoTestReport {
         dependsOn test, 'pitest'
+
+        // Exclusiones de Jacoco corregidas
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, excludes: [
+                        // Configuraciones y propiedades
+                        '**/config/**/*Properties.class',
+                        '**/config/**/*Properties$*.class',
+                        '**/*Properties.class',
+                        '**/*Properties$*.class',
+
+                        // Mensajes y constantes
+                        '**/Messages.class',
+                        '**/Messages$*.class',
+                        '**/*Constants.class',
+                        '**/*Constants$*.class',
+
+                        // Aplicación principal
+                        '**/MainApplication.class',
+                        '**/Application.class',
+
+                        // Configuraciones generales
+                        '**/config/**/*.class',
+                        '**/infrastructure/config/**/*.class',
+
+                        // Entidades JPA/R2DBC (scaffold)
+                        '**/infrastructure/drivenadadapters/jpa/entities/**/*.class',
+                        '**/infrastructure/drivenadadapters/r2dbc/entities/**/*.class',
+                        '**/r2dbc/**/entities/**/*.class',
+                        '**/jpa/**/entities/**/*.class',
+
+                        // DTOs de entry points
+                        '**/infrastructure/entrypoints/**/dto/**/*.class',
+                        '**/api/dto/**/*.class',
+                        '**/dto/**/*.class',
+
+                        // Configuraciones específicas del scaffold
+                        '**/infrastructure/drivenadadapters/**/config/**/*.class',
+                        '**/infrastructure/entrypoints/**/config/**/*.class',
+
+                        // Helpers y utilidades de configuración
+                        '**/r2dbc/helper/**/*.class',
+                        '**/r2dbc/config/**/*.class',
+
+                        // Mappers automáticos (si usas MapStruct)
+                        '**/*MapperImpl.class',
+                        '**/*Mapper$*.class'
+                ])
+            }))
+        }
+
         reports {
             xml.setRequired true
             xml.setOutputLocation layout.buildDirectory.file("reports/jacoco.xml")
@@ -92,7 +144,36 @@ tasks.register('jacocoMergedReport', JacocoReport) {
     dependsOn = [test, subprojects.jacocoTestReport, pitestReportAggregate]
     additionalSourceDirs.setFrom files(subprojects.sourceSets.main.allSource.srcDirs)
     sourceDirectories.setFrom files(subprojects.sourceSets.main.allSource.srcDirs)
-    classDirectories.setFrom files(subprojects.sourceSets.main.output)
+
+    // APLICAR LAS MISMAS EXCLUSIONES AL REPORTE CONSOLIDADO
+    classDirectories.setFrom files(subprojects.sourceSets.main.output).asFileTree.matching {
+        exclude '**/config/**/*Properties.class'
+        exclude '**/config/**/*Properties$*.class'
+        exclude '**/*Properties.class'
+        exclude '**/*Properties$*.class'
+        exclude '**/Messages.class'
+        exclude '**/Messages$*.class'
+        exclude '**/*Constants.class'
+        exclude '**/*Constants$*.class'
+        exclude '**/MainApplication.class'
+        exclude '**/Application.class'
+        exclude '**/config/**/*.class'
+        exclude '**/infrastructure/config/**/*.class'
+        exclude '**/infrastructure/drivenadadapters/jpa/entities/**/*.class'
+        exclude '**/infrastructure/drivenadadapters/r2dbc/entities/**/*.class'
+        exclude '**/r2dbc/**/entities/**/*.class'
+        exclude '**/jpa/**/entities/**/*.class'
+        exclude '**/infrastructure/entrypoints/**/dto/**/*.class'
+        exclude '**/api/dto/**/*.class'
+        exclude '**/dto/**/*.class'
+        exclude '**/infrastructure/drivenadadapters/**/config/**/*.class'
+        exclude '**/infrastructure/entrypoints/**/config/**/*.class'
+        exclude '**/r2dbc/helper/**/*.class'
+        exclude '**/r2dbc/config/**/*.class'
+        exclude '**/*MapperImpl.class'
+        exclude '**/*Mapper$*.class'
+    }
+
     executionData.setFrom project.fileTree(dir: '.', include: '**/build/jacoco/test.exec')
     reports {
         xml.setRequired true

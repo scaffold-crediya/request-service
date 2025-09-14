@@ -82,7 +82,7 @@ public final class Messages {
 
         public static final String EMAIL_NOT_FOUND ="El  email ingresado no existe en el sistema de autenticación";
         // Errores
-        public static final String NOT_FOUND = "Solicitud de préstamo no encontrada";
+        public static final String NOT_FOUND = "Solicitud de prestamo no encontrada";
         public static final String CREATION_FAILED = "Error al crear la solicitud de préstamo";
         public static final String UPDATE_FAILED = "Error al actualizar la solicitud de préstamo";
         public static final String DELETE_FAILED = "Error al eliminar la solicitud de préstamo";

@@ -1,4 +1,4 @@
-package co.com.jhompo.model.applicationtype;
+package co.com.jhompo.model.loantype;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class ApplicationType {
+public class LoanType {
     private int id;
     private String name;
     private BigDecimal minimum_amount;
