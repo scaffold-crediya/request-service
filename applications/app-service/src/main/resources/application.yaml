@@ -10,6 +10,8 @@ spring:
     schema: public
     username: ${SPRING_R2DBC_USERNAME:jhompo}
     password: ${SPRING_R2DBC_PASSWORD:pass123}
+    properties:
+      sslmode: require
   devtools:
     add-properties: false
   h2:
