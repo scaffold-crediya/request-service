@@ -8,7 +8,7 @@ WORKDIR /app
 COPY applications/app-service/build/libs/*.jar request.jar
 
 # Exponer el puerto de la app
-EXPOSE 8080
+EXPOSE 8081
 
 # Comando de ejecución
 ENTRYPOINT ["java","-jar","request.jar"]

@@ -14,5 +14,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation platform('software.amazon.awssdk:bom:2.20.50') // Utiliza la última versión de BOM
     implementation 'software.amazon.awssdk:sqs'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
 }
 
