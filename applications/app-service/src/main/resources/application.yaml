@@ -66,6 +66,12 @@ logging:
     org.springframework.r2dbc.core: DEBUG
     org.springframework.data.r2dbc: DEBUG
 
+gcp:
+  project-id: "crucial-citron-473018-j0"
+  pubsub:
+    validation-topic-id: credit-requests
+  #  credentials:
+  #    location: classpath:credenciales-gcp.json
 
 aws:
   sqs:
