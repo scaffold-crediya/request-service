@@ -31,13 +31,14 @@ import static co.com.jhompo.util.Messages.*;
 public class LoanApplicationUseCase {
 
 
-
     private final LoanApplicationRepository loanRepository;
     private final LoanTypeRepository loanTypeRepository;
     private final StatusRepository statusRepository;
 
     private final UserExistenceGateway verifyEmailExists;
     private final NotificationGateway notificationGateway;
+
+    //private final  LoanValidation message;
 
 
     public Mono<LoanApplication> create(LoanApplication loanApplication) {
@@ -50,11 +51,11 @@ public class LoanApplicationUseCase {
                 })
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(LOAN_APPLICATION.NOT_FOUND)))
                 .flatMap(applicationType -> {
-                    // ✅ Validar monto contra el rango del loan_type
+                    // Validar monto contra el rango del loan_type
                     if (loanApplication.getAmount().compareTo(applicationType.getMinimum_amount()) < 0 ||
                             loanApplication.getAmount().compareTo(applicationType.getMaximum_amount()) > 0) {
                         return Mono.error(new IllegalArgumentException(
-                                String.format("El monto solicitado (%,.2f) está fuera del rango permitido: mínimo %,.2f y máximo %,.2f",
+                                String.format(LOAN_APPLICATION.AMOUNT_VALIDATE,
                                         loanApplication.getAmount(),
                                         applicationType.getMinimum_amount(),
                                         applicationType.getMaximum_amount()
@@ -135,7 +136,7 @@ public class LoanApplicationUseCase {
 
     public Mono<Tuple3<LoanApplication, Status, LoanType>> updateStatusAndGetDetails(UUID applicationId, Integer statusId) {
         return loanRepository.findById(applicationId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Loan application not found: " + applicationId)))
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(LOAN_APPLICATION.NOT_FOUND + applicationId)))
                 .flatMap(app -> loanTypeRepository.findById(app.getApplicationTypeId())
                         .flatMap(appType -> {
                             boolean automaticValidation = Boolean.TRUE.equals(appType.isAutomatic_validation());
@@ -155,7 +156,7 @@ public class LoanApplicationUseCase {
 
         return verifyEmailExists.findUserDetailsByEmails(List.of(app.getEmail()))
                 .next()
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found for email: " + app.getEmail())))
+                .switchIfEmpty(Mono.error(new RuntimeException(LOAN_APPLICATION.EMAIL_NOT_FOUND + app.getEmail())))
                 .flatMap(user -> getDebtsInfo(user)
                         .flatMap(debtsInfo -> {
                             List<Double> activeDebts = debtsInfo.getT1();
@@ -176,7 +177,7 @@ public class LoanApplicationUseCase {
 
 
     public Mono<List<Double>> getActiveDebts(User user) {
-        return statusRepository.findByName("APROBADO")
+        return statusRepository.findByName(STATUS.APROBADO)
                 .flatMapMany(approvedStatus -> loanRepository.findByEmailAndStatusId(user.getEmail(), approvedStatus.getId()))
                 .flatMap(activeLoan ->
                         loanTypeRepository.findById(activeLoan.getApplicationTypeId())
@@ -210,7 +211,7 @@ public class LoanApplicationUseCase {
 
 
     public Mono<Tuple2<List<Double>, Double>> getDebtsInfo(User user) {
-        return statusRepository.findByName("APROBADO")
+        return statusRepository.findByName(STATUS.APROBADO)
                 .flatMapMany(approvedStatus ->
                         loanRepository.findByEmailAndStatusId(user.getEmail(), approvedStatus.getId())
                 )
