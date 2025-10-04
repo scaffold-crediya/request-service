@@ -93,6 +93,7 @@ public final class Messages {
 
         // Validaciones
         public static final String AMOUNT_REQUIRED = "El monto es requerido y debe ser mayor a 0";
+        public static final String AMOUNT_VALIDATE = "El monto solicitado (%,.2f) está fuera del rango permitido: mínimo %,.2f y máximo %,.2f";
         public static final String TERM_REQUIRED = "El plazo es requerido y debe ser un número entero positivo";
 
         private LOAN_APPLICATION() {}
@@ -113,6 +114,8 @@ public final class Messages {
         public static final String NOT_FOUND = "Estado no encontrado";
         public static final String ALREADY_EXISTS = "El estado ya existe";
 
+
+        public static final String APROBADO =  "APROBADO";
 
         public static final String CREATION_FAILED = "Error al crear estado de credito";
         public static final String UPDATE_FAILED = "Error al actualizar estado de credito";
